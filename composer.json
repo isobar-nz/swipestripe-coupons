@@ -1,0 +1,68 @@
+{
+    "name": "swipestripe/swipestripe-coupons",
+    "description": "Coupons module for SwipeStripe.",
+    "type": "silverstripe-vendormodule",
+    "authors": [
+        {
+            "name": "Harsh Chokshi",
+            "email": "harsh.chokshi@littlegiant.co.nz"
+        }
+    ],
+    "minimum-stability": "dev",
+    "prefer-stable": true,
+    "require": {
+        "php": ">=7.1",
+        "swipestripe/swipestripe": "5.0.x-dev"
+    },
+    "repositories": [
+        {
+            "type": "vcs",
+            "url": "https://github.com/littlegiant/silverstripe-swipestripe.git",
+            "no-api": true
+        },
+        {
+            "type": "vcs",
+            "url": "https://github.com/hchokshi/silverstripe-wkhtml.git",
+            "no-api": true
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "SwipeStripe\\Coupons\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "SwipeStripe\\Coupons\\Tests\\": "tests/"
+        },
+        "classmap": [
+            "app/src/Page.php",
+            "app/src/PageController.php"
+        ]
+    },
+    "extra": {
+        "project-files-installed": [
+            "app/.htaccess",
+            "app/_config.php",
+            "app/_config/mysite.yml"
+        ],
+        "public-files-installed": [
+            ".htaccess",
+            "index.php",
+            "install-frameworkmissing.html",
+            "install.php",
+            "web.config"
+        ]
+    },
+    "config": {
+        "preferred-install": {
+            "silverstripe/framework": "source"
+        }
+    },
+    "require-dev": {
+        "php-http/guzzle6-adapter": "^1.1",
+        "silverstripe/recipe-cms": "^4.2",
+        "phpunit/phpunit": "^5.7",
+        "php-coveralls/php-coveralls": "^2.1"
+    }
+}
