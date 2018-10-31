@@ -1,0 +1,6 @@
+SwipeStripe\Coupons\Tests\TestProduct:
+  product:
+    Title: Product
+    Description: This is a product.
+    PriceCurrency: NZD
+    PriceAmount: 1000 # $10.00

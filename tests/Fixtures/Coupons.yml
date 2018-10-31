@@ -1,0 +1,11 @@
+SwipeStripe\Coupons\OrderCoupon:
+  twenty-dollars:
+    Title: $20 off
+    Code: twenty-dollars
+    AmountAmount: 2000
+    AmountCurrency: NZD
+
+  twenty-percent:
+    Title: 20% off
+    Code: twenty-percent
+    Percentage: 0.2

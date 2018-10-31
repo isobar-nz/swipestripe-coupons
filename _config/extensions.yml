@@ -1,0 +1,19 @@
+---
+Name: swipestripe-coupons-extensions
+---
+
+SwipeStripe\Order\Checkout\CheckoutForm:
+  extensions:
+  - SwipeStripe\Coupons\Checkout\CheckoutFormExtension
+
+SwipeStripe\Order\Checkout\CheckoutFormValidator:
+  extensions:
+  - SwipeStripe\Coupons\Checkout\CheckoutFormValidatorExtension
+
+SwipeStripe\Order\Checkout\CheckoutFormRequestHandler:
+  extensions:
+  - SwipeStripe\Coupons\Checkout\CheckoutFormRequestHandlerExtension
+
+SwipeStripe\Order\Order:
+  extensions:
+  - SwipeStripe\Coupons\Order\OrderExtension
