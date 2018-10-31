@@ -164,17 +164,17 @@ class OrderCoupon extends DataObject
     {
         $orderSubTotal = $order->SubTotal()->getMoney();
 
-        // Must be negative, to reduce the order amount
         $couponAmount = $this->Amount->hasAmount()
-            ? $this->Amount->getMoney()->multiply(-1)
-            : $order->SubTotal()->getMoney()->multiply(-1 * $this->Percentage);
+            ? $this->Amount->getMoney()
+            : $orderSubTotal->multiply(floatval($this->Percentage));
 
-        // If sub-total with coupon is negative, coupon is worth sub-total.
+        // If coupon is more than the order amount, coupon is worth sub-total.
         // E.g. $20 coupon on $10 order makes it free, not -$10
-        if ($orderSubTotal->add($couponAmount)->isNegative()) {
-            $couponAmount = $orderSubTotal->multiply(-1);
+        if ($couponAmount->greaterThan($orderSubTotal)) {
+            $couponAmount = $orderSubTotal;
         }
 
-        return DBPrice::create_field(DBPrice::INJECTOR_SPEC, $couponAmount);
+        // Coupon amount should always be negative, so it lowers order total
+        return DBPrice::create_field(DBPrice::INJECTOR_SPEC, $couponAmount->absolute()->negative());
     }
 }
