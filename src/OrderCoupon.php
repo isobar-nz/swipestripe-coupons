@@ -5,6 +5,7 @@ namespace SwipeStripe\Coupons;
 
 use SilverStripe\Forms\FieldList;
 use SilverStripe\ORM\DataObject;
+use SilverStripe\ORM\ValidationResult;
 use SilverStripe\Versioned\Versioned;
 use SwipeStripe\Order\Order;
 use SwipeStripe\Price\DBPrice;
@@ -13,6 +14,7 @@ use SwipeStripe\Price\DBPrice;
  * Class OrderCoupon
  * @package SwipeStripe\Coupons
  * @property string $Code
+ * @property DBPrice $MinSubTotal
  * @property DBPrice $Amount
  * @property float $Percentage
  * @mixin Versioned
@@ -28,10 +30,11 @@ class OrderCoupon extends DataObject
      * @var array
      */
     private static $db = [
-        'Title'      => 'Varchar',
-        'Code'       => 'Varchar',
-        'Amount'     => 'Price',
-        'Percentage' => 'Percentage(6)',
+        'Title'       => 'Varchar',
+        'Code'        => 'Varchar',
+        'MinSubTotal' => 'Price',
+        'Amount'      => 'Price',
+        'Percentage'  => 'Percentage(6)',
     ];
 
     /**
@@ -66,14 +69,23 @@ class OrderCoupon extends DataObject
 
     /**
      * @param Order $order
-     * @return bool
+     * @param string $fieldName
+     * @return ValidationResult
      */
-    public function isValidFor(Order $order): bool
+    public function isValidFor(Order $order, string $fieldName = 'Coupon'): ValidationResult
     {
-        $active = true;
+        $result = ValidationResult::create();
 
-        $this->extend('isActive', $order, $active);
-        return $active;
+        $orderSubTotal = $order->SubTotal()->getMoney();
+        if (!$orderSubTotal->greaterThanOrEqual($this->MinSubTotal->getMoney())) {
+            $result->addFieldError($fieldName, _t(self::class . '.SUBTOTAL_TOO_LOW',
+                'Sorry, this coupon is only valid for orders of at least {min_total}.', [
+                    'min_total' => $this->MinSubTotal->Nice(),
+                ]));
+        }
+
+        $this->extend('isValidFor', $order, $fieldName, $result);
+        return $result;
     }
 
     /**
@@ -88,6 +100,11 @@ class OrderCoupon extends DataObject
             $fields->dataFieldByName('Percentage')
                 ->setDescription('Enter a decimal value between 0 and 1 - e.g. 0.25 for 25% off. Please ' .
                     'only enter one of amount or percentage.');
+
+            $fields->dataFieldByName('MinSubTotal')
+                ->setTitle('Minimum Sub-Total')
+                ->setDescription('Minimum order sub-total (total of items and any item add-ons/coupons) ' .
+                    'for this coupon to be applied.');
         });
 
         return parent::getCMSFields();
@@ -129,6 +146,11 @@ class OrderCoupon extends DataObject
         if (floatval($this->Percentage) < 0) {
             $result->addFieldError('Percentage', _t(self::class . '.PERCENTAGE_NEGATIVE',
                 'Percentage should not be negative.'));
+        }
+
+        if ($this->MinSubTotal->getMoney()->isNegative()) {
+            $result->addFieldError('MinSubTotal', _t(self::class . '.MIN_SUBTOTAL_NEGATIVE',
+                'Minimum sub-total should not be negative.'));
         }
 
         return $result;

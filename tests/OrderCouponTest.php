@@ -162,6 +162,21 @@ class OrderCouponTest extends SapphireTest
     /**
      *
      */
+    public function testNegativeMinSubTotal()
+    {
+        $coupon = OrderCoupon::create();
+        $coupon->Title = 'Invalid';
+        $coupon->Code = $this->generateCode();
+        $coupon->Percentage = 0.5;
+        $coupon->MinSubTotal->setValue(new Money(-10, $this->getSupportedCurrencies()->getDefaultCurrency()));
+
+        $this->expectException(ValidationException::class);
+        $coupon->write();
+    }
+
+    /**
+     *
+     */
     public function testGetByCode()
     {
         $coupon = OrderCoupon::create();
@@ -237,6 +252,21 @@ class OrderCouponTest extends SapphireTest
         $this->assertTrue($twentyPercent->AmountFor($order)->getMoney()->equals(
             new Money(-600, $this->getSupportedCurrencies()->getDefaultCurrency())
         ));
+    }
+
+    /**
+     *
+     */
+    public function testIsValidForMinTotal()
+    {
+        $order = Order::singleton()->createCart();
+
+        /** @var OrderCoupon $coupon */
+        $coupon = $this->objFromFixture(OrderCoupon::class, 'min-ten-dollars');
+        $this->assertFalse($coupon->isValidFor($order)->isValid());
+
+        $order->setItemQuantity($this->product, 1);
+        $this->assertTrue($coupon->isValidFor($order)->isValid());
     }
 
     /**

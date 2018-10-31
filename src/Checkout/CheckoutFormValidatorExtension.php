@@ -30,9 +30,10 @@ class CheckoutFormValidatorExtension extends Extension
         if ($coupon === null) {
             $this->owner->validationError(CheckoutFormExtension::COUPON_CODE_FIELD,
                 _t(self::class . '.COUPON_INVALID', 'Sorry, that coupon code is invalid.'));
-        } elseif (!$coupon->isValidFor($form->getCart())) {
-            $this->owner->validationError(CheckoutFormExtension::COUPON_CODE_FIELD,
-                _t(self::class . '.COUPON_INACTIVE', 'Sorry, that coupon is not currently available.'));
+        } else {
+            $this->owner->getResult()->combineAnd(
+                $coupon->isValidFor($form->getCart(), CheckoutFormExtension::COUPON_CODE_FIELD)
+            );
         }
     }
 }
