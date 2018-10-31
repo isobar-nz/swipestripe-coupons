@@ -113,10 +113,10 @@ class OrderCoupon extends DataObject
                 'A coupon with that code already exists. Code must be unique.'));
         }
 
-        if (!$this->Amount->hasAmount() && !$this->Percentage) {
+        if (!$this->Amount->hasAmount() && !floatval($this->Percentage)) {
             $result->addFieldError('Amount', _t(self::class . '.AMOUNT_PERCENTAGE_EMPTY',
                 'One of amount or percentage must be set.'));
-        } elseif ($this->Amount->hasAmount() && $this->Percentage) {
+        } elseif ($this->Amount->hasAmount() && floatval($this->Percentage)) {
             $result->addFieldError('Percentage', _t(self::class . '.AMOUNT_PERCENTAGE_BOTH_SET',
                 'Please set only one of amount and percentage. The other should be zero.'));
         }
@@ -126,7 +126,7 @@ class OrderCoupon extends DataObject
                 'Amount should not be negative.'));
         }
 
-        if ($this->Percentage < 0) {
+        if (floatval($this->Percentage) < 0) {
             $result->addFieldError('Percentage', _t(self::class . '.PERCENTAGE_NEGATIVE',
                 'Percentage should not be negative.'));
         }
@@ -140,10 +140,18 @@ class OrderCoupon extends DataObject
      */
     public function AmountFor(Order $order): DBPrice
     {
+        $orderSubTotal = $order->SubTotal()->getMoney();
+
         // Must be negative, to reduce the order amount
         $couponAmount = $this->Amount->hasAmount()
             ? $this->Amount->getMoney()->multiply(-1)
-            : $order->SubTotal()->getMoney()->multiply(-1 * (1 - $this->Percentage));
+            : $order->SubTotal()->getMoney()->multiply(-1 * $this->Percentage);
+
+        // If sub-total with coupon is negative, coupon is worth sub-total.
+        // E.g. $20 coupon on $10 order makes it free, not -$10
+        if ($orderSubTotal->add($couponAmount)->isNegative()) {
+            $couponAmount = $orderSubTotal->multiply(-1);
+        }
 
         return DBPrice::create_field(DBPrice::INJECTOR_SPEC, $couponAmount);
     }
