@@ -9,6 +9,7 @@ use SilverStripe\ORM\ValidationException;
 use SwipeStripe\Coupons\OrderCoupon;
 use SwipeStripe\Coupons\Tests\Fixtures\Fixtures;
 use SwipeStripe\Coupons\Tests\Fixtures\PublishesFixtures;
+use SwipeStripe\Order\Order;
 
 /**
  * Class OrderCouponTest
@@ -23,6 +24,7 @@ class OrderCouponTest extends SapphireTest
      * @var array
      */
     protected static $fixture_file = [
+        Fixtures::COUPONS,
         Fixtures::PRODUCTS,
     ];
 
@@ -181,6 +183,60 @@ class OrderCouponTest extends SapphireTest
     public function testGetByInvalidCode()
     {
         $this->assertNull(OrderCoupon::getByCode('kladsfjdlasf'));
+    }
+
+    /**
+     *
+     */
+    public function testFlatAmountFor()
+    {
+        /** @var OrderCoupon $twentyDollars */
+        $twentyDollars = $this->objFromFixture(OrderCoupon::class, 'twenty-dollars');
+
+        $order = Order::singleton()->createCart();
+        $this->assertTrue($twentyDollars->AmountFor($order)->getMoney()->isZero());
+
+        $order->setItemQuantity($this->product, 1);
+        $this->assertTrue($twentyDollars->AmountFor($order)->getMoney()->equals(
+            new Money(-1000, $this->getSupportedCurrencies()->getDefaultCurrency())
+        ));
+
+        $order->setItemQuantity($this->product, 2);
+        $this->assertTrue($twentyDollars->AmountFor($order)->getMoney()->equals(
+            new Money(-2000, $this->getSupportedCurrencies()->getDefaultCurrency())
+        ));
+
+        $order->setItemQuantity($this->product, 3);
+        $this->assertTrue($twentyDollars->AmountFor($order)->getMoney()->equals(
+            new Money(-2000, $this->getSupportedCurrencies()->getDefaultCurrency())
+        ));
+    }
+
+    /**
+     *
+     */
+    public function testPercentageAmountFor()
+    {
+        /** @var OrderCoupon $twentyPercent */
+        $twentyPercent = $this->objFromFixture(OrderCoupon::class, 'twenty-percent');
+
+        $order = Order::singleton()->createCart();
+        $this->assertTrue($twentyPercent->AmountFor($order)->getMoney()->isZero());
+
+        $order->setItemQuantity($this->product, 1);
+        $this->assertTrue($twentyPercent->AmountFor($order)->getMoney()->equals(
+            new Money(-200, $this->getSupportedCurrencies()->getDefaultCurrency())
+        ));
+
+        $order->setItemQuantity($this->product, 2);
+        $this->assertTrue($twentyPercent->AmountFor($order)->getMoney()->equals(
+            new Money(-400, $this->getSupportedCurrencies()->getDefaultCurrency())
+        ));
+
+        $order->setItemQuantity($this->product, 3);
+        $this->assertTrue($twentyPercent->AmountFor($order)->getMoney()->equals(
+            new Money(-600, $this->getSupportedCurrencies()->getDefaultCurrency())
+        ));
     }
 
     /**
