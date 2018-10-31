@@ -100,7 +100,23 @@ class OrderCoupon extends DataObject
     {
         $result = parent::validate();
 
-        if ($this->Amount->hasAmount() && $this->Percentage > 0) {
+        $duplicateCode = static::get()->filter([
+            'ID:not' => $this->ID,
+            'Code'   => $this->Code,
+        ]);
+
+        if (empty($this->Code)) {
+            $result->addFieldError('Code', _t(self::class . '.CODE_EMPTY',
+                'Code cannot be empty.'));
+        } elseif ($duplicateCode->exists()) {
+            $result->addFieldError('Code', _t(self::class . '.CODE_DUPLICATE',
+                'A coupon with that code already exists. Code must be unique.'));
+        }
+
+        if (!$this->Amount->hasAmount() && !$this->Percentage) {
+            $result->addFieldError('Amount', _t(self::class . '.AMOUNT_PERCENTAGE_EMPTY',
+                'One of amount or percentage must be set.'));
+        } elseif ($this->Amount->hasAmount() && $this->Percentage) {
             $result->addFieldError('Percentage', _t(self::class . '.AMOUNT_PERCENTAGE_BOTH_SET',
                 'Please set only one of amount and percentage. The other should be zero.'));
         }
