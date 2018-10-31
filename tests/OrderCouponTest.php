@@ -177,6 +177,21 @@ class OrderCouponTest extends SapphireTest
     /**
      *
      */
+    public function testNegativeMaxValue()
+    {
+        $coupon = OrderCoupon::create();
+        $coupon->Title = 'Invalid';
+        $coupon->Code = $this->generateCode();
+        $coupon->Percentage = 0.5;
+        $coupon->MaxValue->setValue(new Money(-10, $this->getSupportedCurrencies()->getDefaultCurrency()));
+
+        $this->expectException(ValidationException::class);
+        $coupon->write();
+    }
+
+    /**
+     *
+     */
     public function testGetByCode()
     {
         $coupon = OrderCoupon::create();
@@ -267,6 +282,33 @@ class OrderCouponTest extends SapphireTest
 
         $order->setItemQuantity($this->product, 1);
         $this->assertTrue($coupon->isValidFor($order)->isValid());
+    }
+
+    /**
+     *
+     */
+    public function testAmountForMaxValue()
+    {
+        $order = Order::singleton()->createCart();
+
+        /** @var OrderCoupon $coupon */
+        $coupon = $this->objFromFixture(OrderCoupon::class, 'fifty-percent-max-10');
+        $this->assertTrue($coupon->AmountFor($order)->getMoney()->isZero());
+
+        $order->setItemQuantity($this->product, 1);
+        $this->assertTrue($coupon->AmountFor($order)->getMoney()->equals(
+            new Money(-500, $this->getSupportedCurrencies()->getDefaultCurrency())
+        ));
+
+        $order->setItemQuantity($this->product, 2);
+        $this->assertTrue($coupon->AmountFor($order)->getMoney()->equals(
+            new Money(-1000, $this->getSupportedCurrencies()->getDefaultCurrency())
+        ));
+
+        $order->setItemQuantity($this->product, 3);
+        $this->assertTrue($coupon->AmountFor($order)->getMoney()->equals(
+            new Money(-1000, $this->getSupportedCurrencies()->getDefaultCurrency())
+        ));
     }
 
     /**
