@@ -5,8 +5,8 @@ namespace SwipeStripe\Coupons\Checkout;
 
 use SilverStripe\Control\HTTPResponse;
 use SilverStripe\Core\Extension;
+use SwipeStripe\Coupons\Order\OrderCoupon;
 use SwipeStripe\Coupons\Order\OrderExtension;
-use SwipeStripe\Coupons\OrderCoupon;
 use SwipeStripe\Order\Checkout\CheckoutForm;
 use SwipeStripe\Order\Checkout\CheckoutFormRequestHandler;
 use SwipeStripe\Order\Order;

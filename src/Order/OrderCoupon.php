@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-namespace SwipeStripe\Coupons;
+namespace SwipeStripe\Coupons\Order;
 
 use SilverStripe\Forms\FieldList;
 use SilverStripe\ORM\DataObject;
@@ -13,7 +13,7 @@ use SwipeStripe\Price\DBPrice;
 
 /**
  * Class OrderCoupon
- * @package SwipeStripe\Coupons
+ * @package SwipeStripe\Coupons\Order
  * @property string $Code
  * @property DBPrice $MinSubTotal
  * @property DBPrice $Amount

@@ -4,7 +4,7 @@ declare(strict_types=1);
 namespace SwipeStripe\Coupons\Checkout;
 
 use SilverStripe\Core\Extension;
-use SwipeStripe\Coupons\OrderCoupon;
+use SwipeStripe\Coupons\Order\OrderCoupon;
 use SwipeStripe\Order\Checkout\CheckoutForm;
 use SwipeStripe\Order\Checkout\CheckoutFormValidator;
 
