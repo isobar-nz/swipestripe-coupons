@@ -70,6 +70,23 @@ class OrderCoupon extends DataObject
     }
 
     /**
+     * @inheritDoc
+     */
+    public function populateDefaults()
+    {
+        parent::populateDefaults();
+
+        try {
+            // Set default random code - 4 bytes = 8 chars
+            $this->Code = bin2hex(random_bytes(4));
+        } catch (\Exception $e) {
+            throw new \RuntimeException($e->getMessage(), $e->getCode(), $e);
+        }
+
+        return $this;
+    }
+
+    /**
      * @param Order $order
      * @param string $fieldName
      * @return ValidationResult

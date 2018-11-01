@@ -61,27 +61,10 @@ class OrderCouponTest extends SapphireTest
     {
         $coupon = OrderCoupon::create();
         $coupon->Title = 'Invalid';
-        $coupon->Code = $this->generateCode();
         $coupon->Amount->setValue(new Money(-1, $this->getSupportedCurrencies()->getDefaultCurrency()));
 
         $this->expectException(ValidationException::class);
         $coupon->write();
-    }
-
-    /**
-     * @param int $length
-     * @return string
-     */
-    protected function generateCode(int $length = 8): string
-    {
-        $bytes = intval(ceil($length / 2));
-
-        try {
-            $random = bin2hex(random_bytes($bytes));
-            return substr($random, 0, $length);
-        } catch (\Exception $e) {
-            throw new \RuntimeException($e->getMessage(), $e->getCode(), $e);
-        }
     }
 
     /**
@@ -91,7 +74,6 @@ class OrderCouponTest extends SapphireTest
     {
         $coupon = OrderCoupon::create();
         $coupon->Title = 'Invalid';
-        $coupon->Code = $this->generateCode();
 
         $this->expectException(ValidationException::class);
         $coupon->write();
@@ -104,7 +86,6 @@ class OrderCouponTest extends SapphireTest
     {
         $coupon = OrderCoupon::create();
         $coupon->Title = 'Invalid';
-        $coupon->Code = $this->generateCode();
         $coupon->Percentage = -0.5;
 
         $this->expectException(ValidationException::class);
@@ -118,7 +99,6 @@ class OrderCouponTest extends SapphireTest
     {
         $coupon = OrderCoupon::create();
         $coupon->Title = 'Invalid';
-        $coupon->Code = $this->generateCode();
         $coupon->Percentage = -0.5;
         $coupon->Amount->setValue(new Money(500, $this->getSupportedCurrencies()->getDefaultCurrency()));
 
@@ -133,7 +113,6 @@ class OrderCouponTest extends SapphireTest
     {
         $coupon = OrderCoupon::create();
         $coupon->Title = 'Valid';
-        $coupon->Code = $this->generateCode();
         $coupon->Percentage = 0.1;
         $coupon->write();
 
@@ -154,6 +133,7 @@ class OrderCouponTest extends SapphireTest
         $coupon = OrderCoupon::create();
         $coupon->Title = 'Invalid';
         $coupon->Percentage = 0.1;
+        $coupon->Code = '';
 
         $this->expectException(ValidationException::class);
         $coupon->write();
@@ -166,7 +146,6 @@ class OrderCouponTest extends SapphireTest
     {
         $coupon = OrderCoupon::create();
         $coupon->Title = 'Invalid';
-        $coupon->Code = $this->generateCode();
         $coupon->Percentage = 0.5;
         $coupon->MinSubTotal->setValue(new Money(-10, $this->getSupportedCurrencies()->getDefaultCurrency()));
 
@@ -181,7 +160,6 @@ class OrderCouponTest extends SapphireTest
     {
         $coupon = OrderCoupon::create();
         $coupon->Title = 'Invalid';
-        $coupon->Code = $this->generateCode();
         $coupon->Percentage = 0.5;
         $coupon->MaxValue->setValue(new Money(-10, $this->getSupportedCurrencies()->getDefaultCurrency()));
 
@@ -197,7 +175,6 @@ class OrderCouponTest extends SapphireTest
         $coupon = OrderCoupon::create();
         $coupon->Title = 'Valid';
         $coupon->Percentage = 0.1;
-        $coupon->Code = $this->generateCode();
         $coupon->write();
 
         $getByCode = OrderCoupon::getByCode($coupon->Code);
