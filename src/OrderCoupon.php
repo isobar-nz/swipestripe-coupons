@@ -5,6 +5,8 @@ namespace SwipeStripe\Coupons;
 
 use SilverStripe\Forms\FieldList;
 use SilverStripe\ORM\DataObject;
+use SilverStripe\ORM\FieldType\DBDatetime;
+use SilverStripe\ORM\ValidationResult;
 use SilverStripe\Versioned\Versioned;
 use SwipeStripe\Order\Order;
 use SwipeStripe\Price\DBPrice;
@@ -13,8 +15,12 @@ use SwipeStripe\Price\DBPrice;
  * Class OrderCoupon
  * @package SwipeStripe\Coupons
  * @property string $Code
+ * @property DBPrice $MinSubTotal
  * @property DBPrice $Amount
  * @property float $Percentage
+ * @property DBPrice $MaxValue
+ * @property string $ValidFrom
+ * @property string $ValidUntil
  * @mixin Versioned
  */
 class OrderCoupon extends DataObject
@@ -28,10 +34,14 @@ class OrderCoupon extends DataObject
      * @var array
      */
     private static $db = [
-        'Title'      => 'Varchar',
-        'Code'       => 'Varchar',
-        'Amount'     => 'Price',
-        'Percentage' => 'Percentage(6)',
+        'Title'       => 'Varchar',
+        'Code'        => 'Varchar',
+        'MinSubTotal' => 'Price',
+        'Amount'      => 'Price',
+        'Percentage'  => 'Percentage(6)',
+        'MaxValue'    => 'Price',
+        'ValidFrom'   => 'Datetime',
+        'ValidUntil'  => 'Datetime',
     ];
 
     /**
@@ -65,15 +75,61 @@ class OrderCoupon extends DataObject
     }
 
     /**
-     * @param Order $order
-     * @return bool
+     * @inheritDoc
      */
-    public function isValidFor(Order $order): bool
+    public function populateDefaults()
     {
-        $active = true;
+        parent::populateDefaults();
 
-        $this->extend('isActive', $order, $active);
-        return $active;
+        try {
+            // Set default random code - 4 bytes = 8 chars
+            $this->Code = bin2hex(random_bytes(4));
+        } catch (\Exception $e) {
+            throw new \RuntimeException($e->getMessage(), $e->getCode(), $e);
+        }
+
+        return $this;
+    }
+
+    /**
+     * @param Order $order
+     * @param string $fieldName
+     * @return ValidationResult
+     */
+    public function isValidFor(Order $order, string $fieldName = 'Coupon'): ValidationResult
+    {
+        $result = ValidationResult::create();
+
+        $orderSubTotal = $order->SubTotal()->getMoney();
+        if (!$orderSubTotal->greaterThanOrEqual($this->MinSubTotal->getMoney())) {
+            $result->addFieldError($fieldName, _t(self::class . '.SUBTOTAL_TOO_LOW',
+                'Sorry, this coupon is only valid for orders of at least {min_total}.', [
+                    'min_total' => $this->MinSubTotal->Nice(),
+                ]));
+        }
+
+        /** @var DBDatetime $validFrom */
+        $validFrom = $this->obj('ValidFrom');
+        /** @var DBDatetime $validUntil */
+        $validUntil = $this->obj('ValidUntil');
+        $now = DBDatetime::now()->getTimestamp();
+
+        if ($this->ValidFrom !== null && $validFrom->getTimestamp() > $now) {
+            $result->addFieldError($fieldName, _t(self::class . '.TOO_EARLY',
+                'Sorry, that coupon is not valid before {valid_from}.', [
+                    'valid_from' => $validFrom->Nice(),
+                ]));
+        }
+
+        if ($this->ValidUntil !== null && $validUntil->getTimestamp() < $now) {
+            $result->addFieldError($fieldName, _t(self::class . '.TOO_LATE',
+                'Sorry, that coupon expired at {valid_until}.', [
+                    'valid_until' => $validUntil->Nice(),
+                ]));
+        }
+
+        $this->extend('isValidFor', $order, $fieldName, $result);
+        return $result;
     }
 
     /**
@@ -88,6 +144,16 @@ class OrderCoupon extends DataObject
             $fields->dataFieldByName('Percentage')
                 ->setDescription('Enter a decimal value between 0 and 1 - e.g. 0.25 for 25% off. Please ' .
                     'only enter one of amount or percentage.');
+
+            $fields->dataFieldByName('MinSubTotal')
+                ->setTitle('Minimum Sub-Total')
+                ->setDescription('Minimum order sub-total (total of items and any item add-ons/coupons) ' .
+                    'for this coupon to be applied.');
+
+            $fields->dataFieldByName('MaxValue')
+                ->setTitle('Maximum Coupon Value')
+                ->setDescription('The maximum value of this coupon - only valid for percent off coupons. ' .
+                    'E.g. 20% off, maximum discount of $50.');
         });
 
         return parent::getCMSFields();
@@ -126,9 +192,19 @@ class OrderCoupon extends DataObject
                 'Amount should not be negative.'));
         }
 
+        if ($this->MaxValue->getMoney()->isNegative()) {
+            $result->addFieldError('MaxValue', _t(self::class . '.MAX_VALUE_NEGATIVE',
+                'Max value should not be negative.'));
+        }
+
         if (floatval($this->Percentage) < 0) {
             $result->addFieldError('Percentage', _t(self::class . '.PERCENTAGE_NEGATIVE',
                 'Percentage should not be negative.'));
+        }
+
+        if ($this->MinSubTotal->getMoney()->isNegative()) {
+            $result->addFieldError('MinSubTotal', _t(self::class . '.MIN_SUBTOTAL_NEGATIVE',
+                'Minimum sub-total should not be negative.'));
         }
 
         return $result;
@@ -142,17 +218,26 @@ class OrderCoupon extends DataObject
     {
         $orderSubTotal = $order->SubTotal()->getMoney();
 
-        // Must be negative, to reduce the order amount
-        $couponAmount = $this->Amount->hasAmount()
-            ? $this->Amount->getMoney()->multiply(-1)
-            : $order->SubTotal()->getMoney()->multiply(-1 * $this->Percentage);
+        if ($this->Amount->hasAmount()) {
+            $couponAmount = $this->Amount->getMoney();
+        } else {
+            $couponAmount = $orderSubTotal->multiply(floatval($this->Percentage));
+            $maxValue = $this->MaxValue->getMoney();
 
-        // If sub-total with coupon is negative, coupon is worth sub-total.
-        // E.g. $20 coupon on $10 order makes it free, not -$10
-        if ($orderSubTotal->add($couponAmount)->isNegative()) {
-            $couponAmount = $orderSubTotal->multiply(-1);
+            if (!$maxValue->isZero() && $couponAmount->greaterThan($maxValue)) {
+                $couponAmount = $maxValue;
+            }
         }
 
-        return DBPrice::create_field(DBPrice::INJECTOR_SPEC, $couponAmount);
+        // If coupon is more than the order amount, coupon is worth sub-total.
+        // E.g. $20 coupon on $10 order makes it free, not -$10
+        if ($couponAmount->greaterThan($orderSubTotal)) {
+            $couponAmount = $orderSubTotal;
+        }
+
+        $this->extend('updateAmountFor', $order, $couponAmount);
+
+        // Coupon amount should always be negative, so it lowers order total
+        return DBPrice::create_field(DBPrice::INJECTOR_SPEC, $couponAmount->absolute()->negative());
     }
 }

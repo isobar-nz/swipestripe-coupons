@@ -9,3 +9,23 @@ SwipeStripe\Coupons\OrderCoupon:
     Title: 20% off
     Code: twenty-percent
     Percentage: 0.2
+
+  fifty-percent-max-10:
+    Title: 50% off, max $10
+    Code: fifty-max-ten
+    Percentage: 0.5
+    MaxValueAmount: 1000
+    MaxValueCurrency: NZD
+
+  min-ten-dollars:
+    Title: $2 off $10 or more
+    Code: min-ten-dollars
+    AmountAmount: 200
+    AmountCurrency: NZD
+    MinSubTotalAmount: 1000
+    MinSubTotalCurrency: NZD
+
+  valid-to-from:
+    Title: Valid to/from
+    Code: valid-to-from
+    Percentage: 0.01
