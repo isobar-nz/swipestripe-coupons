@@ -5,6 +5,7 @@ namespace SwipeStripe\Coupons;
 
 use SilverStripe\Forms\FieldList;
 use SilverStripe\ORM\DataObject;
+use SilverStripe\ORM\FieldType\DBDatetime;
 use SilverStripe\ORM\ValidationResult;
 use SilverStripe\Versioned\Versioned;
 use SwipeStripe\Order\Order;
@@ -18,6 +19,8 @@ use SwipeStripe\Price\DBPrice;
  * @property DBPrice $Amount
  * @property float $Percentage
  * @property DBPrice $MaxValue
+ * @property string $ValidFrom
+ * @property string $ValidUntil
  * @mixin Versioned
  */
 class OrderCoupon extends DataObject
@@ -37,6 +40,8 @@ class OrderCoupon extends DataObject
         'Amount'      => 'Price',
         'Percentage'  => 'Percentage(6)',
         'MaxValue'    => 'Price',
+        'ValidFrom'   => 'Datetime',
+        'ValidUntil'  => 'Datetime',
     ];
 
     /**
@@ -100,6 +105,26 @@ class OrderCoupon extends DataObject
             $result->addFieldError($fieldName, _t(self::class . '.SUBTOTAL_TOO_LOW',
                 'Sorry, this coupon is only valid for orders of at least {min_total}.', [
                     'min_total' => $this->MinSubTotal->Nice(),
+                ]));
+        }
+
+        /** @var DBDatetime $validFrom */
+        $validFrom = $this->obj('ValidFrom');
+        /** @var DBDatetime $validUntil */
+        $validUntil = $this->obj('ValidUntil');
+        $now = DBDatetime::now()->getTimestamp();
+
+        if ($this->ValidFrom !== null && $validFrom->getTimestamp() > $now) {
+            $result->addFieldError($fieldName, _t(self::class . '.TOO_EARLY',
+                'Sorry, that coupon is not valid before {valid_from}.', [
+                    'valid_from' => $validFrom->Nice(),
+                ]));
+        }
+
+        if ($this->ValidUntil !== null && $validUntil->getTimestamp() < $now) {
+            $result->addFieldError($fieldName, _t(self::class . '.TOO_LATE',
+                'Sorry, that coupon expired at {valid_until}.', [
+                    'valid_until' => $validUntil->Nice(),
                 ]));
         }
 

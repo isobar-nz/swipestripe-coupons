@@ -5,6 +5,7 @@ namespace SwipeStripe\Coupons\Tests;
 
 use Money\Money;
 use SilverStripe\Dev\SapphireTest;
+use SilverStripe\ORM\FieldType\DBDatetime;
 use SilverStripe\ORM\ValidationException;
 use SwipeStripe\Coupons\OrderCoupon;
 use SwipeStripe\Coupons\Tests\Fixtures\Fixtures;
@@ -19,6 +20,7 @@ class OrderCouponTest extends SapphireTest
 {
     use NeedsSupportedCurrencies;
     use PublishesFixtures;
+    use WaitsMockTime;
 
     /**
      * @var array
@@ -259,6 +261,63 @@ class OrderCouponTest extends SapphireTest
 
         $order->setItemQuantity($this->product, 1);
         $this->assertTrue($coupon->isValidFor($order)->isValid());
+    }
+
+    /**
+     *
+     */
+    public function testValidForValidFrom()
+    {
+        $order = Order::singleton()->createCart();
+
+        /** @var OrderCoupon $coupon */
+        $coupon = $this->objFromFixture(OrderCoupon::class, 'valid-to-from');
+        $coupon->ValidFrom = DBDatetime::now()->getTimestamp() + 30;
+        $coupon->ValidUntil = null;
+
+        $this->assertFalse($coupon->isValidFor($order)->isValid());
+
+        $this->mockWait(60);
+        $this->assertTrue($coupon->isValidFor($order)->isValid());
+    }
+
+    /**
+     *
+     */
+    public function testValidForValidUntil()
+    {
+        $order = Order::singleton()->createCart();
+
+        /** @var OrderCoupon $coupon */
+        $coupon = $this->objFromFixture(OrderCoupon::class, 'valid-to-from');
+        $coupon->ValidFrom = null;
+        $coupon->ValidUntil = DBDatetime::now()->getTimestamp() + 30;
+
+        $this->assertTrue($coupon->isValidFor($order)->isValid());
+
+        $this->mockWait(60);
+        $this->assertFalse($coupon->isValidFor($order)->isValid());
+    }
+
+    /**
+     *
+     */
+    public function testValidForValidFromUntil()
+    {
+        $order = Order::singleton()->createCart();
+
+        /** @var OrderCoupon $coupon */
+        $coupon = $this->objFromFixture(OrderCoupon::class, 'valid-to-from');
+        $coupon->ValidFrom = DBDatetime::now()->getTimestamp() + 30;
+        $coupon->ValidUntil = DBDatetime::now()->getTimestamp() + 60;
+
+        $this->assertFalse($coupon->isValidFor($order)->isValid());
+
+        $this->mockWait(45);
+        $this->assertTrue($coupon->isValidFor($order)->isValid());
+
+        $this->mockWait(45);
+        $this->assertFalse($coupon->isValidFor($order)->isValid());
     }
 
     /**

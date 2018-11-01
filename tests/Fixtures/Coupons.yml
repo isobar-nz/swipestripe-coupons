@@ -24,3 +24,8 @@ SwipeStripe\Coupons\OrderCoupon:
     AmountCurrency: NZD
     MinSubTotalAmount: 1000
     MinSubTotalCurrency: NZD
+
+  valid-to-from:
+    Title: Valid to/from
+    Code: valid-to-from
+    Percentage: 0.01
