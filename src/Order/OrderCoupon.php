@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace SwipeStripe\Coupons\Order;
 
 use SilverStripe\Forms\FieldList;
+use SilverStripe\Forms\ToggleCompositeField;
 use SilverStripe\ORM\DataObject;
 use SilverStripe\ORM\FieldType\DBDatetime;
 use SilverStripe\ORM\ValidationResult;
@@ -148,7 +149,7 @@ class OrderCoupon extends DataObject
                 ->setDescription('Enter a decimal value between 0 and 1 - e.g. 0.25 for 25% off. Please ' .
                     'only enter one of amount or percentage.');
 
-            $fields->dataFieldByName('MinSubTotal')
+            $minSubTotal = $fields->dataFieldByName('MinSubTotal')
                 ->setTitle('Minimum Sub-Total')
                 ->setDescription('Minimum order sub-total (total of items and any item add-ons/coupons) ' .
                     'for this coupon to be applied.');
@@ -157,6 +158,19 @@ class OrderCoupon extends DataObject
                 ->setTitle('Maximum Coupon Value')
                 ->setDescription('The maximum value of this coupon - only valid for percent off coupons. ' .
                     'E.g. 20% off, maximum discount of $50.');
+
+            $validFrom = $fields->dataFieldByName('ValidFrom');
+            $validUntil = $fields->dataFieldByName('ValidUntil');
+            $fields->removeByName([
+                'MinSubTotal',
+                'ValidFrom',
+                'ValidUntil',
+            ]);
+            $fields->insertAfter('MaxValue', ToggleCompositeField::create('Restrictions', 'Restrictions', [
+                $minSubTotal,
+                $validFrom,
+                $validUntil,
+            ]));
         });
 
         return parent::getCMSFields();
