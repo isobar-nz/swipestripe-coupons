@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace SwipeStripe\Coupons;
 
 use SilverStripe\Admin\ModelAdmin;
+use SwipeStripe\Coupons\Order\OrderCoupon;
 
 /**
  * Class CouponAdmin

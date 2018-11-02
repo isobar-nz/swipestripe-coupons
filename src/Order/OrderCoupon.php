@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-namespace SwipeStripe\Coupons;
+namespace SwipeStripe\Coupons\Order;
 
 use SilverStripe\Forms\FieldList;
 use SilverStripe\ORM\DataObject;
@@ -13,7 +13,7 @@ use SwipeStripe\Price\DBPrice;
 
 /**
  * Class OrderCoupon
- * @package SwipeStripe\Coupons
+ * @package SwipeStripe\Coupons\Order
  * @property string $Code
  * @property DBPrice $MinSubTotal
  * @property DBPrice $Amount
@@ -103,7 +103,8 @@ class OrderCoupon extends DataObject
         $orderSubTotal = $order->SubTotal()->getMoney();
         if (!$orderSubTotal->greaterThanOrEqual($this->MinSubTotal->getMoney())) {
             $result->addFieldError($fieldName, _t(self::class . '.SUBTOTAL_TOO_LOW',
-                'Sorry, this coupon is only valid for orders of at least {min_total}.', [
+                'Sorry, the coupon "{title}" is only valid for orders of at least {min_total}.', [
+                    'title'     => $this->Title,
                     'min_total' => $this->MinSubTotal->Nice(),
                 ]));
         }
@@ -116,14 +117,16 @@ class OrderCoupon extends DataObject
 
         if ($this->ValidFrom !== null && $validFrom->getTimestamp() > $now) {
             $result->addFieldError($fieldName, _t(self::class . '.TOO_EARLY',
-                'Sorry, that coupon is not valid before {valid_from}.', [
+                'Sorry, the coupon "{title}" is not valid before {valid_from}.', [
+                    'title'      => $this->Title,
                     'valid_from' => $validFrom->Nice(),
                 ]));
         }
 
         if ($this->ValidUntil !== null && $validUntil->getTimestamp() < $now) {
             $result->addFieldError($fieldName, _t(self::class . '.TOO_LATE',
-                'Sorry, that coupon expired at {valid_until}.', [
+                'Sorry, the coupon "{title}" expired at {valid_until}.', [
+                    'title'       => $this->Title,
                     'valid_until' => $validUntil->Nice(),
                 ]));
         }

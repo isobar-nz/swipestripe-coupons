@@ -1,4 +1,4 @@
-SwipeStripe\Coupons\OrderCoupon:
+SwipeStripe\Coupons\Order\OrderCoupon:
   twenty-dollars:
     Title: $20 off
     Code: twenty-dollars

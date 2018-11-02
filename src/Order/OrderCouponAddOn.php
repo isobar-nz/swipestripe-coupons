@@ -3,7 +3,6 @@ declare(strict_types=1);
 
 namespace SwipeStripe\Coupons\Order;
 
-use SwipeStripe\Coupons\OrderCoupon;
 use SwipeStripe\Order\OrderAddOn;
 use SwipeStripe\Price\DBPrice;
 

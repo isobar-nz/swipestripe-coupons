@@ -4,8 +4,8 @@ declare(strict_types=1);
 namespace SwipeStripe\Coupons\Tests\Order;
 
 use SilverStripe\Dev\SapphireTest;
+use SwipeStripe\Coupons\Order\OrderCoupon;
 use SwipeStripe\Coupons\Order\OrderExtension;
-use SwipeStripe\Coupons\OrderCoupon;
 use SwipeStripe\Coupons\Tests\Fixtures\Fixtures;
 use SwipeStripe\Coupons\Tests\Fixtures\PublishesFixtures;
 use SwipeStripe\Coupons\Tests\NeedsSupportedCurrencies;

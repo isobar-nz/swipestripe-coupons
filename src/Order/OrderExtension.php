@@ -27,14 +27,13 @@ class OrderExtension extends DataExtension
     public function getCouponAddOn(): OrderCouponAddOn
     {
         /** @var OrderCouponAddOn|null $existing */
-        $existing = OrderCouponAddOn::get_one(OrderCouponAddOn::class, ['OrderID' => $this->owner->ID]);
+        $existing = $this->owner->OrderAddOns()->find('ClassName', OrderCouponAddOn::class);
         if ($existing !== null) {
             return $existing;
         }
 
         $new = OrderCouponAddOn::create();
         $new->OrderID = $this->owner->ID;
-        $new->flushCache();
 
         return $new;
     }

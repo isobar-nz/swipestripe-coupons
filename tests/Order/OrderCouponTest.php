@@ -1,20 +1,23 @@
 <?php
 declare(strict_types=1);
 
-namespace SwipeStripe\Coupons\Tests;
+namespace SwipeStripe\Coupons\Tests\Order;
 
 use Money\Money;
 use SilverStripe\Dev\SapphireTest;
 use SilverStripe\ORM\FieldType\DBDatetime;
 use SilverStripe\ORM\ValidationException;
-use SwipeStripe\Coupons\OrderCoupon;
+use SwipeStripe\Coupons\Order\OrderCoupon;
 use SwipeStripe\Coupons\Tests\Fixtures\Fixtures;
 use SwipeStripe\Coupons\Tests\Fixtures\PublishesFixtures;
+use SwipeStripe\Coupons\Tests\NeedsSupportedCurrencies;
+use SwipeStripe\Coupons\Tests\TestProduct;
+use SwipeStripe\Coupons\Tests\WaitsMockTime;
 use SwipeStripe\Order\Order;
 
 /**
  * Class OrderCouponTest
- * @package SwipeStripe\Coupons\Tests
+ * @package SwipeStripe\Coupons\Tests\Order
  */
 class OrderCouponTest extends SapphireTest
 {
