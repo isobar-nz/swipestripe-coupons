@@ -25,7 +25,7 @@ class OrderCouponAddOnTest extends SapphireTest
      * @var array
      */
     protected static $fixture_file = [
-        Fixtures::COUPONS,
+        Fixtures::ORDER_COUPONS,
         Fixtures::PRODUCTS,
     ];
 

@@ -1,0 +1,6 @@
+SwipeStripe\Coupons\Order\OrderItem\OrderItemCoupon:
+  twenty-dollars-item:
+    Title: $20 off
+    Code: twenty-dollars-item
+    AmountAmount: 2000
+    AmountCurrency: NZD

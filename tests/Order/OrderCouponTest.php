@@ -8,6 +8,7 @@ use SilverStripe\Dev\SapphireTest;
 use SilverStripe\ORM\FieldType\DBDatetime;
 use SilverStripe\ORM\ValidationException;
 use SwipeStripe\Coupons\Order\OrderCoupon;
+use SwipeStripe\Coupons\Order\OrderItem\OrderItemCoupon;
 use SwipeStripe\Coupons\Tests\Fixtures\Fixtures;
 use SwipeStripe\Coupons\Tests\Fixtures\PublishesFixtures;
 use SwipeStripe\Coupons\Tests\NeedsSupportedCurrencies;
@@ -29,7 +30,8 @@ class OrderCouponTest extends SapphireTest
      * @var array
      */
     protected static $fixture_file = [
-        Fixtures::COUPONS,
+        Fixtures::ITEM_COUPONS,
+        Fixtures::ORDER_COUPONS,
         Fixtures::PRODUCTS,
     ];
 
@@ -128,6 +130,23 @@ class OrderCouponTest extends SapphireTest
 
         $this->expectException(ValidationException::class);
         $coupon2->write();
+    }
+
+    /**
+     *
+     */
+    public function testDuplicateCodeFromOrderItemCoupon()
+    {
+        /** @var OrderItemCoupon $orderItemCoupon */
+        $orderItemCoupon = OrderItemCoupon::get()->first();
+
+        $coupon = OrderCoupon::create();
+        $coupon->Title = 'Invalid';
+        $coupon->Code = $orderItemCoupon->Code;
+        $coupon->Percentage = 0.1;
+
+        $this->expectException(ValidationException::class);
+        $coupon->write();
     }
 
     /**
@@ -357,6 +376,7 @@ class OrderCouponTest extends SapphireTest
     {
         $this->registerPublishingBlueprint(TestProduct::class);
         $this->registerPublishingBlueprint(OrderCoupon::class);
+        $this->registerPublishingBlueprint(OrderItemCoupon::class);
 
         parent::setUp();
 

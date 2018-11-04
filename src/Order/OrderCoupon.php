@@ -10,6 +10,7 @@ use SilverStripe\ORM\FieldType\DBDatetime;
 use SilverStripe\ORM\ValidationResult;
 use SilverStripe\Versioned\Versioned;
 use SwipeStripe\Coupons\CouponBehaviour;
+use SwipeStripe\Coupons\Order\OrderItem\OrderItemCoupon;
 use SwipeStripe\Order\Order;
 use SwipeStripe\Price\DBPrice;
 
@@ -139,17 +140,20 @@ class OrderCoupon extends DataObject
     {
         $result = parent::validate();
 
-        $duplicateCode = static::get()->filter([
-            'ID:not' => $this->ID,
-            'Code'   => $this->Code,
-        ]);
+        $duplicateCode = static::getByCode($this->Code) ?? OrderItemCoupon::getByCode($this->Code);
+        if ($duplicateCode instanceof self && $duplicateCode->ID === $this->ID) {
+            // Don't mark self as duplicate
+            $duplicateCode = null;
+        }
 
         if (empty($this->Code)) {
-            $result->addFieldError('Code', _t(self::class . '.CODE_EMPTY',
-                'Code cannot be empty.'));
-        } elseif ($duplicateCode->exists()) {
+            $result->addFieldError('Code', _t(self::class . '.CODE_EMPTY', 'Code cannot be empty.'));
+        } elseif ($duplicateCode !== null) {
             $result->addFieldError('Code', _t(self::class . '.CODE_DUPLICATE',
-                'A coupon with that code already exists. Code must be unique.'));
+                'Another coupon with that code ("{other_coupon_title}") already exists. Code must be unique across ' .
+                'order and order item coupons.', [
+                    'other_coupon_title' => $duplicateCode->Title,
+                ]));
         }
 
         if (!$this->Amount->hasAmount() && !floatval($this->Percentage)) {
