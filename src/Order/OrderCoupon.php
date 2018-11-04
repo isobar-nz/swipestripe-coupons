@@ -9,6 +9,7 @@ use SilverStripe\ORM\DataObject;
 use SilverStripe\ORM\FieldType\DBDatetime;
 use SilverStripe\ORM\ValidationResult;
 use SilverStripe\Versioned\Versioned;
+use SwipeStripe\Coupons\CouponBehaviour;
 use SwipeStripe\Order\Order;
 use SwipeStripe\Price\DBPrice;
 
@@ -26,6 +27,8 @@ use SwipeStripe\Price\DBPrice;
  */
 class OrderCoupon extends DataObject
 {
+    use CouponBehaviour;
+
     /**
      * @var string
      */
@@ -44,53 +47,6 @@ class OrderCoupon extends DataObject
         'ValidFrom'   => 'Datetime',
         'ValidUntil'  => 'Datetime',
     ];
-
-    /**
-     * @var array
-     */
-    private static $indexes = [
-        'code-unique' => [
-            'type'    => 'unique',
-            'columns' => [
-                'Code',
-            ],
-        ],
-    ];
-
-    /**
-     * @var array
-     */
-    private static $extensions = [
-        Versioned::class => Versioned::class,
-    ];
-
-    /**
-     * @param string $code
-     * @return null|OrderCoupon
-     */
-    public static function getByCode(string $code): ?self
-    {
-        return static::get_one(static::class, [
-            'Code' => $code,
-        ]);
-    }
-
-    /**
-     * @inheritDoc
-     */
-    public function populateDefaults()
-    {
-        parent::populateDefaults();
-
-        try {
-            // Set default random code - 4 bytes = 8 chars
-            $this->Code = bin2hex(random_bytes(4));
-        } catch (\Exception $e) {
-            throw new \RuntimeException($e->getMessage(), $e->getCode(), $e);
-        }
-
-        return $this;
-    }
 
     /**
      * @param Order $order

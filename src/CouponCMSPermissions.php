@@ -50,6 +50,7 @@ trait CouponCMSPermissions
     /**
      * @see DataObject::canCreate()
      * @param null|Member $member
+     * @param array $context
      * @return bool
      */
     public function canCreate($member = null, $context = [])
