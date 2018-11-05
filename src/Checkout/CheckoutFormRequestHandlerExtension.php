@@ -47,11 +47,7 @@ class CheckoutFormRequestHandlerExtension extends Extension
     {
         /** @var Order|OrderExtension $order */
         $order = $form->getCart();
-        $couponAddOn = $order->getCouponAddOn();
-
-        if ($couponAddOn->exists()) {
-            $couponAddOn->delete();
-        }
+        $order->clearAppliedCoupons();
 
         return $this->owner->redirectBack();
     }

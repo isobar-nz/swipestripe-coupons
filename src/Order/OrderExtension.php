@@ -39,4 +39,29 @@ class OrderExtension extends DataExtension
 
         return $new;
     }
+
+    /**
+     * @param bool $includeOrderItems
+     * @return int
+     */
+    public function clearAppliedCoupons(bool $includeOrderItems = true): int
+    {
+        $count = 0;
+
+        /** @var OrderCouponAddOn $addOn */
+        foreach (OrderCouponAddOn::get()->filter('OrderID', $this->owner->ID) as $addOn) {
+            $addOn->delete();
+            $count++;
+        }
+
+        if ($includeOrderItems) {
+            /** @var OrderItemCouponAddOn $addOn */
+            foreach (OrderItemCouponAddOn::get()->filter('OrderItem.OrderID', $this->owner->ID) as $addOn) {
+                $addOn->delete();
+                $count++;
+            }
+        }
+
+        return $count;
+    }
 }
