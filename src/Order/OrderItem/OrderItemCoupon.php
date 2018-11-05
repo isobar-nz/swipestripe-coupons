@@ -7,8 +7,10 @@ use SilverStripe\Forms\FieldList;
 use SilverStripe\Forms\GridField\GridField;
 use SilverStripe\Forms\GridField\GridFieldConfig_RecordViewer;
 use SilverStripe\Forms\GridField\GridFieldViewButton;
+use SilverStripe\Forms\ToggleCompositeField;
 use SilverStripe\ORM\DataObject;
 use SilverStripe\ORM\DataQuery;
+use SilverStripe\ORM\FieldType\DBDatetime;
 use SilverStripe\ORM\HasManyList;
 use SilverStripe\ORM\SS_List;
 use SilverStripe\ORM\ValidationResult;
@@ -26,6 +28,8 @@ use SwipeStripe\Price\DBPrice;
  * @property string $Code
  * @property DBPrice $Amount
  * @property float $Percentage
+ * @property string $ValidFrom
+ * @property string $ValidUntil
  * @method HasManyList|OrderItemCouponPurchasable[] Purchasables()
  * @mixin Versioned
  */
@@ -46,6 +50,8 @@ class OrderItemCoupon extends DataObject
         'Code'       => 'Varchar',
         'Amount'     => 'Price',
         'Percentage' => 'Percentage(6)',
+        'ValidFrom'  => 'Datetime',
+        'ValidUntil' => 'Datetime',
     ];
 
     /**
@@ -84,6 +90,28 @@ class OrderItemCoupon extends DataObject
         if ($this->getApplicableOrderItems($order)->count() === 0) {
             $result->addFieldError($fieldName, _t(self::class . '.NO_MATCHED_ITEMS', 'Sorry, that coupon ' .
                 'is not valid for any items in your cart.'));
+        }
+
+        /** @var DBDatetime $validFrom */
+        $validFrom = $this->obj('ValidFrom');
+        /** @var DBDatetime $validUntil */
+        $validUntil = $this->obj('ValidUntil');
+        $now = DBDatetime::now()->getTimestamp();
+
+        if ($this->ValidFrom !== null && $validFrom->getTimestamp() > $now) {
+            $result->addFieldError($fieldName, _t(self::class . '.TOO_EARLY',
+                'Sorry, the coupon "{title}" is not valid before {valid_from}.', [
+                    'title'      => $this->Title,
+                    'valid_from' => $validFrom->Nice(),
+                ]));
+        }
+
+        if ($this->ValidUntil !== null && $validUntil->getTimestamp() < $now) {
+            $result->addFieldError($fieldName, _t(self::class . '.TOO_LATE',
+                'Sorry, the coupon "{title}" expired at {valid_until}.', [
+                    'title'       => $this->Title,
+                    'valid_until' => $validUntil->Nice(),
+                ]));
         }
 
         $this->extend('isValidFor', $order, $fieldName, $result);
@@ -138,6 +166,17 @@ class OrderItemCoupon extends DataObject
             $fields->dataFieldByName('Percentage')
                 ->setDescription('Enter a decimal value between 0 and 1 - e.g. 0.25 for 25% off. Please ' .
                     'only enter one of amount or percentage.');
+
+            $validFrom = $fields->dataFieldByName('ValidFrom');
+            $validUntil = $fields->dataFieldByName('ValidUntil');
+            $fields->removeByName([
+                'ValidFrom',
+                'ValidUntil',
+            ]);
+            $fields->insertAfter('Percentage', ToggleCompositeField::create('Restrictions', 'Restrictions', [
+                $validFrom,
+                $validUntil,
+            ]));
         });
 
         return parent::getCMSFields();

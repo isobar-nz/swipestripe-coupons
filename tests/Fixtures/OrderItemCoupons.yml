@@ -1,11 +1,11 @@
 SwipeStripe\Coupons\Order\OrderItem\OrderItemCoupon:
-  twenty-dollars-item:
+  twenty-dollars:
     Title: $20 off
     Code: twenty-dollars-item
     AmountAmount: 2000
     AmountCurrency: NZD
 
-  twenty-percent-item:
+  twenty-percent:
     Title: 20% off
     Code: twenty-percent-item
     Percentage: 0.2
@@ -15,13 +15,18 @@ SwipeStripe\Coupons\Order\OrderItem\OrderItemCoupon:
     Code: both-products
     Percentage: 0.1
 
+  valid-to-from:
+    Title: Valid to/from
+    Code: valid-to-from
+    Percentage: 0.01
+
 SwipeStripe\Coupons\Order\OrderItem\OrderItemCouponPurchasable:
   one:
-    OrderItemCoupon: =>SwipeStripe\Coupons\Order\OrderItem\OrderItemCoupon.twenty-dollars-item
+    OrderItemCoupon: =>SwipeStripe\Coupons\Order\OrderItem\OrderItemCoupon.twenty-dollars
     Purchasable: =>SwipeStripe\Coupons\Tests\TestProduct.product
 
   two:
-    OrderItemCoupon: =>SwipeStripe\Coupons\Order\OrderItem\OrderItemCoupon.twenty-percent-item
+    OrderItemCoupon: =>SwipeStripe\Coupons\Order\OrderItem\OrderItemCoupon.twenty-percent
     Purchasable: =>SwipeStripe\Coupons\Tests\TestProduct.product
 
   three:
@@ -31,3 +36,7 @@ SwipeStripe\Coupons\Order\OrderItem\OrderItemCouponPurchasable:
   four:
     OrderItemCoupon: =>SwipeStripe\Coupons\Order\OrderItem\OrderItemCoupon.both-products
     Purchasable: =>SwipeStripe\Coupons\Tests\TestProduct.other-product
+
+  five:
+    OrderItemCoupon: =>SwipeStripe\Coupons\Order\OrderItem\OrderItemCoupon.valid-to-from
+    Purchasable: =>SwipeStripe\Coupons\Tests\TestProduct.product

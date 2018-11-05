@@ -59,7 +59,7 @@ class OrderItemCouponAddOnTest extends SapphireTest
         /** @var TestProduct $product */
         $product = $this->objFromFixture(TestProduct::class, 'product');
         /** @var OrderItemCoupon $coupon */
-        $coupon = $this->objFromFixture(OrderItemCoupon::class, 'twenty-dollars-item');
+        $coupon = $this->objFromFixture(OrderItemCoupon::class, 'twenty-dollars');
 
         $order->addItem($product);
         $orderItem = $order->getOrderItem($product);
