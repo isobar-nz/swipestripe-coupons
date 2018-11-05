@@ -50,7 +50,7 @@ class CheckoutFormValidatorExtension extends Extension
         $couponAddOn = $cart->getCouponAddOn();
 
         if ($couponAddOn->exists()) {
-            $validationResult = $couponAddOn->OrderCoupon()->isValidFor($cart, '');
+            $validationResult = $couponAddOn->Coupon()->isValidFor($cart);
             $this->owner->getResult()->combineAnd($validationResult);
         }
     }

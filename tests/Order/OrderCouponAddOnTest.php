@@ -66,10 +66,10 @@ class OrderCouponAddOnTest extends SapphireTest
         $coupon = $this->objFromFixture(OrderCoupon::class, 'twenty-dollars');
 
         $addOn = $order->getCouponAddOn();
-        $addOn->setOrderCoupon($coupon)
+        $addOn->setCoupon($coupon)
             ->write();
 
-        $this->assertSame($coupon->ID, $addOn->OrderCoupon()->ID);
+        $this->assertSame($coupon->ID, $addOn->Coupon()->ID);
         $this->assertTrue($addOn->Amount->getMoney()->equals(
             $coupon->AmountFor($order)->getMoney()
         ));

@@ -9,8 +9,8 @@ use SwipeStripe\Price\DBPrice;
 /**
  * Class OrderItemCouponAddOn
  * @package SwipeStripe\Coupons\Order\OrderItem
- * @property int $OrderItemCouponID
- * @method OrderItemCoupon OrderItemCoupon()
+ * @property int $CouponID
+ * @method OrderItemCoupon Coupon()
  */
 class OrderItemCouponAddOn extends OrderItemAddOn
 {
@@ -23,16 +23,16 @@ class OrderItemCouponAddOn extends OrderItemAddOn
      * @var array
      */
     private static $has_one = [
-        'OrderItemCoupon' => OrderItemCoupon::class,
+        'Coupon' => OrderItemCoupon::class,
     ];
 
     /**
      * @param OrderItemCoupon $coupon
      * @return $this
      */
-    public function setOrderItemCoupon(OrderItemCoupon $coupon): self
+    public function setCoupon(OrderItemCoupon $coupon): self
     {
-        $this->OrderItemCouponID = $coupon->ID;
+        $this->CouponID = $coupon->ID;
         $this->Title = _t(self::class . '.ADDON_TITLE', 'Coupon - {coupon_title}', [
             'coupon_title' => $coupon->Title,
         ]);
@@ -45,6 +45,6 @@ class OrderItemCouponAddOn extends OrderItemAddOn
      */
     public function getAmount(): DBPrice
     {
-        return $this->OrderItemCoupon()->AmountFor($this->OrderItem());
+        return $this->Coupon()->AmountFor($this->OrderItem());
     }
 }
