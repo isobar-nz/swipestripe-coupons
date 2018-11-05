@@ -17,6 +17,7 @@ use SwipeStripe\Coupons\CouponBehaviour;
 use SwipeStripe\Coupons\Order\OrderCoupon;
 use SwipeStripe\Order\Order;
 use SwipeStripe\Order\OrderItem\OrderItem;
+use SwipeStripe\Order\PurchasableInterface;
 use SwipeStripe\Price\DBPrice;
 
 /**
@@ -105,6 +106,18 @@ class OrderItemCoupon extends DataObject
                 ]);
             }
         });
+    }
+
+    /**
+     * @param PurchasableInterface $purchasable
+     * @return bool
+     */
+    public function isApplicableFor(PurchasableInterface $purchasable): bool
+    {
+        return $this->Purchasables()->filter([
+            'PurchasableClass' => $purchasable->ClassName,
+            'PurchasableID'    => $purchasable->ID,
+        ])->exists();
     }
 
     /**

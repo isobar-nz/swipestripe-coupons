@@ -330,6 +330,27 @@ class OrderItemCouponTest extends SapphireTest
     }
 
     /**
+     *
+     */
+    public function testIsApplicableFor()
+    {
+        /** @var OrderItemCoupon $couponOne */
+        $couponOne = $this->objFromFixture(OrderItemCoupon::class, 'twenty-percent-item');
+        /** @var OrderItemCoupon $bothProductsCoupon */
+        $bothProductsCoupon = $this->objFromFixture(OrderItemCoupon::class, 'both-products');
+
+        /** @var TestProduct $product */
+        $product = $this->objFromFixture(TestProduct::class, 'product');
+        $this->assertTrue($couponOne->isApplicableFor($product));
+        $this->assertTrue($bothProductsCoupon->isApplicableFor($product));
+
+        /** @var TestProduct $otherProduct */
+        $otherProduct = $this->objFromFixture(TestProduct::class, 'other-product');
+        $this->assertFalse($couponOne->isApplicableFor($otherProduct));
+        $this->assertTrue($bothProductsCoupon->isApplicableFor($otherProduct));
+    }
+
+    /**
      * @inheritDoc
      */
     protected function setUp()
