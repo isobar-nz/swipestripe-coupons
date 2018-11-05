@@ -88,8 +88,10 @@ class OrderItemCoupon extends DataObject
         $result = ValidationResult::create();
 
         if ($this->getApplicableOrderItems($order)->count() === 0) {
-            $result->addFieldError($fieldName, _t(self::class . '.NO_MATCHED_ITEMS', 'Sorry, that coupon ' .
-                'is not valid for any items in your cart.'));
+            $result->addFieldError($fieldName, _t(self::class . '.NO_MATCHED_ITEMS', 'Sorry, the coupon ' .
+                '"{title}" is not valid for any items in your cart.', [
+                'title' => $this->Title,
+            ]));
         }
 
         /** @var DBDatetime $validFrom */
