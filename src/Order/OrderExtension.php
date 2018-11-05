@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace SwipeStripe\Coupons\Order;
 
 use SilverStripe\ORM\DataExtension;
+use SwipeStripe\Coupons\Order\OrderItem\OrderItemCouponAddOn;
 use SwipeStripe\Order\Order;
 
 /**
@@ -18,7 +19,8 @@ class OrderExtension extends DataExtension
      */
     public function hasCoupons(): bool
     {
-        return $this->getCouponAddOn()->exists();
+        return OrderCouponAddOn::get()->find('OrderID', $this->owner->ID) !== null ||
+            OrderItemCouponAddOn::get()->find('OrderItem.OrderID', $this->owner->ID) !== null;
     }
 
     /**
@@ -27,7 +29,7 @@ class OrderExtension extends DataExtension
     public function getCouponAddOn(): OrderCouponAddOn
     {
         /** @var OrderCouponAddOn|null $existing */
-        $existing = $this->owner->OrderAddOns()->find('ClassName', OrderCouponAddOn::class);
+        $existing = OrderCouponAddOn::get()->find('OrderID', $this->owner->ID);
         if ($existing !== null) {
             return $existing;
         }
