@@ -10,7 +10,6 @@ use SilverStripe\ORM\ValidationException;
 use SwipeStripe\Coupons\Order\OrderCoupon;
 use SwipeStripe\Coupons\Order\OrderItem\OrderItemCoupon;
 use SwipeStripe\Coupons\Tests\Fixtures\Fixtures;
-use SwipeStripe\Coupons\Tests\Fixtures\PublishesFixtures;
 use SwipeStripe\Coupons\Tests\NeedsSupportedCurrencies;
 use SwipeStripe\Coupons\Tests\TestProduct;
 use SwipeStripe\Coupons\Tests\WaitsMockTime;
@@ -23,16 +22,15 @@ use SwipeStripe\Order\Order;
 class OrderCouponTest extends SapphireTest
 {
     use NeedsSupportedCurrencies;
-    use PublishesFixtures;
     use WaitsMockTime;
 
     /**
      * @var array
      */
     protected static $fixture_file = [
+        Fixtures::PRODUCTS,
         Fixtures::ITEM_COUPONS,
         Fixtures::ORDER_COUPONS,
-        Fixtures::PRODUCTS,
     ];
 
     /**
@@ -374,10 +372,6 @@ class OrderCouponTest extends SapphireTest
      */
     protected function setUp()
     {
-        $this->registerPublishingBlueprint(TestProduct::class);
-        $this->registerPublishingBlueprint(OrderCoupon::class);
-        $this->registerPublishingBlueprint(OrderItemCoupon::class);
-
         parent::setUp();
 
         $this->product = $this->objFromFixture(TestProduct::class, 'product');

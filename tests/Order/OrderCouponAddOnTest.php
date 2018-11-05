@@ -8,7 +8,6 @@ use SwipeStripe\Coupons\Order\OrderCoupon;
 use SwipeStripe\Coupons\Order\OrderCouponAddOn;
 use SwipeStripe\Coupons\Order\OrderExtension;
 use SwipeStripe\Coupons\Tests\Fixtures\Fixtures;
-use SwipeStripe\Coupons\Tests\Fixtures\PublishesFixtures;
 use SwipeStripe\Coupons\Tests\NeedsSupportedCurrencies;
 use SwipeStripe\Coupons\Tests\TestProduct;
 use SwipeStripe\Order\Order;
@@ -20,7 +19,6 @@ use SwipeStripe\Order\Order;
 class OrderCouponAddOnTest extends SapphireTest
 {
     use NeedsSupportedCurrencies;
-    use PublishesFixtures;
 
     /**
      * @var array
@@ -87,9 +85,6 @@ class OrderCouponAddOnTest extends SapphireTest
      */
     protected function setUp()
     {
-        $this->registerPublishingBlueprint(OrderCoupon::class);
-        $this->registerPublishingBlueprint(TestProduct::class);
-
         parent::setUp();
 
         $this->product = $this->objFromFixture(TestProduct::class, 'product');
