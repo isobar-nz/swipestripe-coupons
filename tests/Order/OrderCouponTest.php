@@ -104,7 +104,7 @@ class OrderCouponTest extends SapphireTest
     {
         $coupon = OrderCoupon::create();
         $coupon->Title = 'Invalid';
-        $coupon->Percentage = -0.5;
+        $coupon->Percentage = 0.5;
         $coupon->Amount->setValue(new Money(500, $this->getSupportedCurrencies()->getDefaultCurrency()));
 
         $this->expectException(ValidationException::class);
@@ -144,6 +144,20 @@ class OrderCouponTest extends SapphireTest
         $coupon->Percentage = 0.1;
 
         $this->expectException(ValidationException::class);
+        $coupon->write();
+    }
+
+    /**
+     *
+     */
+    public function testWriteDoesntCauseDuplicateCode()
+    {
+        $coupon = OrderCoupon::get()->first();
+        $originalTitle = $coupon->Title;
+        $coupon->Title = 'Rename test';
+        $coupon->write();
+
+        $coupon->Title = $originalTitle;
         $coupon->write();
     }
 

@@ -1,22 +1,22 @@
 <?php
 declare(strict_types=1);
 
-namespace SwipeStripe\Coupons\Tests\Order;
+namespace SwipeStripe\Coupons\Tests\Order\OrderItem;
 
 use SilverStripe\Dev\SapphireTest;
-use SwipeStripe\Coupons\Order\OrderCoupon;
-use SwipeStripe\Coupons\Order\OrderCouponAddOn;
 use SwipeStripe\Coupons\Order\OrderExtension;
+use SwipeStripe\Coupons\Order\OrderItem\OrderItemCoupon;
+use SwipeStripe\Coupons\Order\OrderItem\OrderItemCouponAddOn;
 use SwipeStripe\Coupons\Tests\Fixtures\Fixtures;
 use SwipeStripe\Coupons\Tests\NeedsSupportedCurrencies;
 use SwipeStripe\Coupons\Tests\TestProduct;
 use SwipeStripe\Order\Order;
 
 /**
- * Class OrderCouponAddOnTest
- * @package SwipeStripe\Coupons\Tests\Order
+ * Class OrderItemCouponAddOnTest
+ * @package SwipeStripe\Coupons\Tests\Order\OrderItem
  */
-class OrderCouponAddOnTest extends SapphireTest
+class OrderItemCouponAddOnTest extends SapphireTest
 {
     use NeedsSupportedCurrencies;
 
@@ -24,8 +24,8 @@ class OrderCouponAddOnTest extends SapphireTest
      * @var array
      */
     protected static $fixture_file = [
-        Fixtures::ORDER_COUPONS,
         Fixtures::PRODUCTS,
+        Fixtures::ITEM_COUPONS,
     ];
 
     /**
@@ -39,11 +39,6 @@ class OrderCouponAddOnTest extends SapphireTest
      * @var bool
      */
     protected $usesDatabase = true;
-
-    /**
-     * @var TestProduct
-     */
-    protected $product;
 
     /**
      * @inheritDoc
@@ -61,32 +56,27 @@ class OrderCouponAddOnTest extends SapphireTest
     {
         /** @var Order|OrderExtension $order */
         $order = Order::singleton()->createCart();
-        /** @var OrderCoupon $coupon */
-        $coupon = $this->objFromFixture(OrderCoupon::class, 'twenty-dollars');
+        /** @var TestProduct $product */
+        $product = $this->objFromFixture(TestProduct::class, 'product');
+        /** @var OrderItemCoupon $coupon */
+        $coupon = $this->objFromFixture(OrderItemCoupon::class, 'twenty-dollars-item');
 
-        $addOn = OrderCouponAddOn::create();
-        $addOn->OrderID = $order->ID;
+        $order->addItem($product);
+        $orderItem = $order->getOrderItem($product);
+
+        $addOn = OrderItemCouponAddOn::create();
+        $addOn->OrderItemID = $orderItem->ID;
         $addOn->setCoupon($coupon)
             ->write();
 
         $this->assertSame($coupon->ID, $addOn->Coupon()->ID);
         $this->assertTrue($addOn->Amount->getMoney()->equals(
-            $coupon->AmountFor($order)->getMoney()
+            $coupon->AmountFor($orderItem)->getMoney()
         ));
 
-        $order->setItemQuantity($this->product, 3);
+        $order->setItemQuantity($product, 3);
         $this->assertTrue($addOn->Amount->getMoney()->equals(
-            $coupon->AmountFor($order)->getMoney()
+            $coupon->AmountFor($orderItem)->getMoney()
         ));
-    }
-
-    /**
-     * @inheritDoc
-     */
-    protected function setUp()
-    {
-        parent::setUp();
-
-        $this->product = $this->objFromFixture(TestProduct::class, 'product');
     }
 }

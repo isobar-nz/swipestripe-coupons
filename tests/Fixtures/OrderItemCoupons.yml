@@ -4,3 +4,30 @@ SwipeStripe\Coupons\Order\OrderItem\OrderItemCoupon:
     Code: twenty-dollars-item
     AmountAmount: 2000
     AmountCurrency: NZD
+
+  twenty-percent-item:
+    Title: 20% off
+    Code: twenty-percent-item
+    Percentage: 0.2
+
+  both-products:
+    Title: Applies to all the products!
+    Code: both-products
+    Percentage: 0.1
+
+SwipeStripe\Coupons\Order\OrderItem\OrderItemCouponPurchasable:
+  one:
+    OrderItemCoupon: =>SwipeStripe\Coupons\Order\OrderItem\OrderItemCoupon.twenty-dollars-item
+    Purchasable: =>SwipeStripe\Coupons\Tests\TestProduct.product
+
+  two:
+    OrderItemCoupon: =>SwipeStripe\Coupons\Order\OrderItem\OrderItemCoupon.twenty-percent-item
+    Purchasable: =>SwipeStripe\Coupons\Tests\TestProduct.product
+
+  three:
+    OrderItemCoupon: =>SwipeStripe\Coupons\Order\OrderItem\OrderItemCoupon.both-products
+    Purchasable: =>SwipeStripe\Coupons\Tests\TestProduct.product
+
+  four:
+    OrderItemCoupon: =>SwipeStripe\Coupons\Order\OrderItem\OrderItemCoupon.both-products
+    Purchasable: =>SwipeStripe\Coupons\Tests\TestProduct.other-product
