@@ -50,6 +50,23 @@ class OrderCoupon extends DataObject
     ];
 
     /**
+     * @var array
+     */
+    private static $summary_fields = [
+        'Title'        => 'Title',
+        'Code'         => 'Code',
+        'DisplayValue' => 'Value',
+    ];
+
+    /**
+     * @var array
+     */
+    private static $searchable_fields = [
+        'Title',
+        'Code',
+    ];
+
+    /**
      * @param Order $order
      * @param string $fieldName
      * @return ValidationResult

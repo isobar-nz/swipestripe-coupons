@@ -11,7 +11,7 @@ use SilverStripe\Versioned\Versioned;
  * @package SwipeStripe\Coupons
  * @mixin DataObject
  * @mixin Versioned
- * @property string $Code
+ * @property string $DisplayValue
  */
 trait CouponBehaviour
 {
@@ -64,5 +64,15 @@ trait CouponBehaviour
         }
 
         return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getDisplayValue(): string
+    {
+        return $this->Amount->hasAmount()
+            ? $this->Amount->getValue()
+            : $this->Percentage * 100 . '%';
     }
 }
