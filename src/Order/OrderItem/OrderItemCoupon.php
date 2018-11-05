@@ -5,10 +5,13 @@ namespace SwipeStripe\Coupons\Order\OrderItem;
 
 use SilverStripe\Forms\FieldList;
 use SilverStripe\ORM\DataObject;
+use SilverStripe\ORM\DataQuery;
+use SilverStripe\ORM\SS_List;
 use SilverStripe\ORM\ValidationResult;
 use SilverStripe\Versioned\Versioned;
 use SwipeStripe\Coupons\CouponBehaviour;
 use SwipeStripe\Coupons\Order\OrderCoupon;
+use SwipeStripe\Order\Order;
 use SwipeStripe\Order\OrderItem\OrderItem;
 use SwipeStripe\Price\DBPrice;
 
@@ -40,16 +43,39 @@ class OrderItemCoupon extends DataObject
     ];
 
     /**
-     * @param OrderItem $orderItem
+     * @param Order $order
      * @param string $fieldName
      * @return ValidationResult
      */
-    public function isValidFor(OrderItem $orderItem, string $fieldName = 'Coupon'): ValidationResult
+    public function isValidFor(Order $order, string $fieldName = 'Coupon'): ValidationResult
     {
         $result = ValidationResult::create();
 
-        $this->extend('isValidFor', $orderItem, $fieldName, $result);
+        if ($this->getApplicableOrderItems($order)->count() === 0) {
+            $result->addFieldError($fieldName, _t(self::class . '.NO_MATCHED_ITEMS', 'Sorry, that coupon ' .
+                'is not valid for any items in your cart.'));
+        }
+
+        $this->extend('isValidFor', $order, $fieldName, $result);
         return $result;
+    }
+
+    /**
+     * @param Order $order
+     * @return SS_List|OrderItem[]
+     */
+    public function getApplicableOrderItems(Order $order): SS_List
+    {
+        return $order->OrderItems()->alterDataQuery(function (DataQuery $query) {
+            $or = $query->disjunctiveGroup();
+
+            foreach ($this->Purchasables() as $purchasable) {
+                $or->conjunctiveGroup()->where([
+                    'PurchasableClass' => $purchasable->PurchasableClass,
+                    'PurchasableID'    => $purchasable->PurchasableID,
+                ]);
+            }
+        });
     }
 
     /**
