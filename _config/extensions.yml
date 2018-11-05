@@ -18,6 +18,10 @@ SwipeStripe\Order\Order:
   extensions:
   - SwipeStripe\Coupons\Order\OrderExtension
 
+SwipeStripe\Order\OrderItem\OrderItem:
+  extensions:
+  - SwipeStripe\Coupons\Order\OrderItem\OrderItemExtension
+
 ---
 Only:
   moduleexists: swipestripe/swipestripe-common

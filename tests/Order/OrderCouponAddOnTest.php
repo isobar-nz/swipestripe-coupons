@@ -5,6 +5,7 @@ namespace SwipeStripe\Coupons\Tests\Order;
 
 use SilverStripe\Dev\SapphireTest;
 use SwipeStripe\Coupons\Order\OrderCoupon;
+use SwipeStripe\Coupons\Order\OrderCouponAddOn;
 use SwipeStripe\Coupons\Order\OrderExtension;
 use SwipeStripe\Coupons\Tests\Fixtures\Fixtures;
 use SwipeStripe\Coupons\Tests\Fixtures\PublishesFixtures;
@@ -65,7 +66,8 @@ class OrderCouponAddOnTest extends SapphireTest
         /** @var OrderCoupon $coupon */
         $coupon = $this->objFromFixture(OrderCoupon::class, 'twenty-dollars');
 
-        $addOn = $order->getCouponAddOn();
+        $addOn = OrderCouponAddOn::create();
+        $addOn->OrderID = $order->ID;
         $addOn->setCoupon($coupon)
             ->write();
 

@@ -47,11 +47,14 @@ class CheckoutFormValidatorExtension extends Extension
      */
     public function validateAppliedCoupons(Order $cart): void
     {
-        $couponAddOn = $cart->getCouponAddOn();
+        $result = $this->owner->getResult();
 
-        if ($couponAddOn->exists()) {
-            $validationResult = $couponAddOn->Coupon()->isValidFor($cart);
-            $this->owner->getResult()->combineAnd($validationResult);
+        foreach ($cart->OrderCouponAddOns() as $addOn) {
+            $result->combineAnd($addOn->Coupon()->isValidFor($cart));
+        }
+
+        foreach ($cart->OrderItemCouponAddOns() as $addOn) {
+            $result->combineAnd($addOn->Coupon()->isValidFor($cart));
         }
     }
 }

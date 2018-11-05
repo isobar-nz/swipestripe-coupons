@@ -8,6 +8,7 @@ use SwipeStripe\Coupons\Order\OrderCouponAddOn;
 use SwipeStripe\Coupons\Order\OrderExtension;
 use SwipeStripe\Coupons\Tests\NeedsSupportedCurrencies;
 use SwipeStripe\Order\Order;
+use SwipeStripe\Order\OrderAddOn;
 
 /**
  * Class OrderExtensionTest
@@ -34,46 +35,30 @@ class OrderExtensionTest extends SapphireTest
     /**
      *
      */
-    public function testGetCouponAddOn()
-    {
-        /** @var Order|OrderExtension $order */
-        $order = Order::singleton()->createCart();
-
-        $this->assertNull($order->OrderAddOns()->find('ClassName', OrderCouponAddOn::class));
-        $this->assertInstanceOf(OrderCouponAddOn::class, $order->getCouponAddOn());
-    }
-
-    /**
-     *
-     */
-    public function testGetCouponAddOnExisting()
-    {
-        /** @var Order|OrderExtension $order */
-        $order = Order::singleton()->createCart();
-
-        $addOn = OrderCouponAddOn::create();
-        $addOn->OrderID = $order->ID;
-        $addOn->write();
-
-        $getAddOn = $order->getCouponAddOn();
-        $this->assertInstanceOf(OrderCouponAddOn::class, $getAddOn);
-        $this->assertSame($addOn->ID, $getAddOn->ID);
-    }
-
-    /**
-     *
-     */
     public function testHasCoupons()
     {
         /** @var Order|OrderExtension $order */
         $order = Order::singleton()->createCart();
-
         $this->assertFalse($order->hasCoupons());
 
-        $addOn = $order->getCouponAddOn();
-        $this->assertFalse($order->hasCoupons());
-
+        $addOn = OrderCouponAddOn::create();
+        $addOn->OrderID = $order->ID;
         $addOn->write();
         $this->assertTrue($order->hasCoupons());
+    }
+
+    /**
+     *
+     */
+    public function testHasCouponsDifferentAddOn()
+    {
+        /** @var Order|OrderExtension $order */
+        $order = Order::singleton()->createCart();
+        $this->assertFalse($order->hasCoupons());
+
+        $addOn = OrderAddOn::create();
+        $addOn->OrderID = $order->ID;
+        $addOn->write();
+        $this->assertFalse($order->hasCoupons());
     }
 }

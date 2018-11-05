@@ -7,9 +7,12 @@ use SilverStripe\Control\HTTPResponse;
 use SilverStripe\Core\Extension;
 use SwipeStripe\Coupons\Order\OrderCoupon;
 use SwipeStripe\Coupons\Order\OrderExtension;
+use SwipeStripe\Coupons\Order\OrderItem\OrderItemCoupon;
+use SwipeStripe\Coupons\Order\OrderItem\OrderItemExtension;
 use SwipeStripe\Order\Checkout\CheckoutForm;
 use SwipeStripe\Order\Checkout\CheckoutFormRequestHandler;
 use SwipeStripe\Order\Order;
+use SwipeStripe\Order\OrderItem\OrderItem;
 
 /**
  * Class CheckoutFormRequestHandlerExtension
@@ -26,13 +29,24 @@ class CheckoutFormRequestHandlerExtension extends Extension
     public function ApplyCoupon(array $data, CheckoutForm $form): HTTPResponse
     {
         $code = $data[CheckoutFormExtension::COUPON_CODE_FIELD];
+        if (empty($code)) {
+            return $this->owner->redirectBack();
+        }
 
-        if (!empty($code)) {
+        $orderCoupon = OrderCoupon::getByCode($code);
+
+        if ($orderCoupon !== null) {
             /** @var Order|OrderExtension $order */
             $order = $form->getCart();
-            $order->getCouponAddOn()
-                ->setOrderCoupon(OrderCoupon::getByCode($code))
-                ->write();
+            $order->applyCoupon($orderCoupon);
+        } else {
+            $orderItemCoupon = OrderItemCoupon::getByCode($code);
+            if ($orderItemCoupon !== null) {
+                /** @var OrderItem|OrderItemExtension $orderItem */
+                foreach ($orderItemCoupon->getApplicableOrderItems($form->getCart()) as $orderItem) {
+                    $orderItem->applyCoupon($orderItemCoupon);
+                }
+            }
         }
 
         return $this->owner->redirectBack();
@@ -47,7 +61,8 @@ class CheckoutFormRequestHandlerExtension extends Extension
     {
         /** @var Order|OrderExtension $order */
         $order = $form->getCart();
-        $order->clearAppliedCoupons();
+        $order->clearAppliedOrderCoupons();
+        $order->clearAppliedOrderItemCoupons();
 
         return $this->owner->redirectBack();
     }

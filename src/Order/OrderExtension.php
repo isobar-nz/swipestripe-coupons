@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace SwipeStripe\Coupons\Order;
 
 use SilverStripe\ORM\DataExtension;
+use SilverStripe\ORM\DataList;
 use SwipeStripe\Coupons\Order\OrderItem\OrderItemCouponAddOn;
 use SwipeStripe\Order\Order;
 
@@ -19,47 +20,63 @@ class OrderExtension extends DataExtension
      */
     public function hasCoupons(): bool
     {
-        return OrderCouponAddOn::get()->find('OrderID', $this->owner->ID) !== null ||
-            OrderItemCouponAddOn::get()->find('OrderItem.OrderID', $this->owner->ID) !== null;
+        return $this->owner->OrderCouponAddOns()->exists() || $this->owner->OrderItemCouponAddOns()->exists();
     }
 
     /**
-     * @return OrderCouponAddOn
+     * @return DataList|OrderCouponAddOn[]
      */
-    public function getCouponAddOn(): OrderCouponAddOn
+    public function OrderCouponAddOns(): DataList
     {
-        /** @var OrderCouponAddOn|null $existing */
-        $existing = OrderCouponAddOn::get()->find('OrderID', $this->owner->ID);
-        if ($existing !== null) {
-            return $existing;
-        }
-
-        $new = OrderCouponAddOn::create();
-        $new->OrderID = $this->owner->ID;
-
-        return $new;
+        return OrderCouponAddOn::get()->filter('OrderID', $this->owner->ID);
     }
 
     /**
-     * @param bool $includeOrderItems
+     * @return DataList|OrderItemCouponAddOn[]
+     */
+    public function OrderItemCouponAddOns(): DataList
+    {
+        return OrderItemCouponAddOn::get()->filter('OrderItem.OrderID', $this->owner->ID);
+    }
+
+    /**
+     * @param OrderCoupon $coupon
+     */
+    public function applyCoupon(OrderCoupon $coupon): void
+    {
+        if ($this->owner->OrderCouponAddOns()->find('CouponID', $coupon->ID) === null) {
+            $addOn = OrderCouponAddOn::create();
+            $addOn->OrderID = $this->owner->ID;
+            $addOn->setCoupon($coupon);
+            $addOn->write();
+        }
+    }
+
+    /**
      * @return int
      */
-    public function clearAppliedCoupons(bool $includeOrderItems = true): int
+    public function clearAppliedOrderCoupons(): int
     {
         $count = 0;
 
-        /** @var OrderCouponAddOn $addOn */
-        foreach (OrderCouponAddOn::get()->filter('OrderID', $this->owner->ID) as $addOn) {
+        foreach ($this->owner->OrderCouponAddOns() as $addOn) {
             $addOn->delete();
             $count++;
         }
 
-        if ($includeOrderItems) {
-            /** @var OrderItemCouponAddOn $addOn */
-            foreach (OrderItemCouponAddOn::get()->filter('OrderItem.OrderID', $this->owner->ID) as $addOn) {
-                $addOn->delete();
-                $count++;
-            }
+        return $count;
+    }
+
+    /**
+     * @return int
+     */
+    public function clearAppliedOrderItemCoupons(): int
+    {
+        $count = 0;
+
+        foreach ($this->owner->OrderItemCouponAddOns() as $addOn) {
+            $addOn->delete();
+            $count++;
         }
 
         return $count;
