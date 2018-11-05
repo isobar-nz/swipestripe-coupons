@@ -45,7 +45,7 @@ class OrderItemCouponTest extends SapphireTest
     /**
      * @var TestProduct
      */
-    protected $product;
+    protected $product, $otherProduct;
 
     /**
      * @inheritDoc
@@ -261,9 +261,7 @@ class OrderItemCouponTest extends SapphireTest
         $coupon = $this->objFromFixture(OrderItemCoupon::class, 'twenty-dollars-item');
         $this->assertCount(0, $coupon->getApplicableOrderItems($order));
 
-        /** @var TestProduct $otherProduct */
-        $otherProduct = $this->objFromFixture(TestProduct::class, 'other-product');
-        $order->addItem($otherProduct);
+        $order->addItem($this->otherProduct);
         $this->assertCount(0, $coupon->getApplicableOrderItems($order));
     }
 
@@ -277,13 +275,8 @@ class OrderItemCouponTest extends SapphireTest
         $coupon = $this->objFromFixture(OrderItemCoupon::class, 'twenty-dollars-item');
         $this->assertCount(0, $coupon->getApplicableOrderItems($order));
 
-        /** @var TestProduct $product */
-        $product = $this->objFromFixture(TestProduct::class, 'product');
-        /** @var TestProduct $otherProduct */
-        $otherProduct = $this->objFromFixture(TestProduct::class, 'other-product');
-
-        $order->addItem($product);
-        $order->addItem($otherProduct);
+        $order->addItem($this->product);
+        $order->addItem($this->otherProduct);
         $this->assertCount(1, $coupon->getApplicableOrderItems($order));
     }
 
@@ -297,13 +290,8 @@ class OrderItemCouponTest extends SapphireTest
         $coupon = $this->objFromFixture(OrderItemCoupon::class, 'both-products');
         $this->assertCount(0, $coupon->getApplicableOrderItems($order));
 
-        /** @var TestProduct $product */
-        $product = $this->objFromFixture(TestProduct::class, 'product');
-        /** @var TestProduct $otherProduct */
-        $otherProduct = $this->objFromFixture(TestProduct::class, 'other-product');
-
-        $order->addItem($product);
-        $order->addItem($otherProduct);
+        $order->addItem($this->product);
+        $order->addItem($this->otherProduct);
         $this->assertCount(2, $coupon->getApplicableOrderItems($order));
     }
 
@@ -317,15 +305,10 @@ class OrderItemCouponTest extends SapphireTest
         $coupon = $this->objFromFixture(OrderItemCoupon::class, 'twenty-percent-item');
         $this->assertFalse($coupon->isValidFor($order)->isValid());
 
-        /** @var TestProduct $product */
-        $product = $this->objFromFixture(TestProduct::class, 'product');
-        /** @var TestProduct $otherProduct */
-        $otherProduct = $this->objFromFixture(TestProduct::class, 'other-product');
-
-        $order->addItem($otherProduct);
+        $order->addItem($this->otherProduct);
         $this->assertFalse($coupon->isValidFor($order)->isValid());
 
-        $order->addItem($product);
+        $order->addItem($this->product);
         $this->assertTrue($coupon->isValidFor($order)->isValid());
     }
 
@@ -339,15 +322,11 @@ class OrderItemCouponTest extends SapphireTest
         /** @var OrderItemCoupon $bothProductsCoupon */
         $bothProductsCoupon = $this->objFromFixture(OrderItemCoupon::class, 'both-products');
 
-        /** @var TestProduct $product */
-        $product = $this->objFromFixture(TestProduct::class, 'product');
-        $this->assertTrue($couponOne->isApplicableFor($product));
-        $this->assertTrue($bothProductsCoupon->isApplicableFor($product));
+        $this->assertTrue($couponOne->isApplicableFor($this->product));
+        $this->assertTrue($bothProductsCoupon->isApplicableFor($this->product));
 
-        /** @var TestProduct $otherProduct */
-        $otherProduct = $this->objFromFixture(TestProduct::class, 'other-product');
-        $this->assertFalse($couponOne->isApplicableFor($otherProduct));
-        $this->assertTrue($bothProductsCoupon->isApplicableFor($otherProduct));
+        $this->assertFalse($couponOne->isApplicableFor($this->otherProduct));
+        $this->assertTrue($bothProductsCoupon->isApplicableFor($this->otherProduct));
     }
 
     /**
@@ -358,5 +337,6 @@ class OrderItemCouponTest extends SapphireTest
         parent::setUp();
 
         $this->product = $this->objFromFixture(TestProduct::class, 'product');
+        $this->otherProduct = $this->objFromFixture(TestProduct::class, 'other-product');
     }
 }

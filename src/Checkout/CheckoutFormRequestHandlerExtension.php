@@ -33,15 +33,19 @@ class CheckoutFormRequestHandlerExtension extends Extension
             return $this->owner->redirectBack();
         }
 
+        /** @var Order|OrderExtension $order */
+        $order = $form->getCart();
         $orderCoupon = OrderCoupon::getByCode($code);
 
         if ($orderCoupon !== null) {
-            /** @var Order|OrderExtension $order */
-            $order = $form->getCart();
+            $order->clearAppliedOrderCoupons();
+            $order->clearAppliedOrderItemCoupons();
             $order->applyCoupon($orderCoupon);
         } else {
             $orderItemCoupon = OrderItemCoupon::getByCode($code);
             if ($orderItemCoupon !== null) {
+                $order->clearAppliedOrderCoupons();
+                $order->clearAppliedOrderItemCoupons();
                 /** @var OrderItem|OrderItemExtension $orderItem */
                 foreach ($orderItemCoupon->getApplicableOrderItems($form->getCart()) as $orderItem) {
                     $orderItem->applyCoupon($orderItemCoupon);
