@@ -4,8 +4,12 @@ declare(strict_types=1);
 namespace SwipeStripe\Coupons\Order\OrderItem;
 
 use SilverStripe\Forms\FieldList;
+use SilverStripe\Forms\GridField\GridField;
+use SilverStripe\Forms\GridField\GridFieldConfig_RecordViewer;
+use SilverStripe\Forms\GridField\GridFieldViewButton;
 use SilverStripe\ORM\DataObject;
 use SilverStripe\ORM\DataQuery;
+use SilverStripe\ORM\HasManyList;
 use SilverStripe\ORM\SS_List;
 use SilverStripe\ORM\ValidationResult;
 use SilverStripe\Versioned\Versioned;
@@ -21,6 +25,7 @@ use SwipeStripe\Price\DBPrice;
  * @property string $Code
  * @property DBPrice $Amount
  * @property float $Percentage
+ * @method HasManyList|OrderItemCouponPurchasable[] Purchasables()
  * @mixin Versioned
  */
 class OrderItemCoupon extends DataObject
@@ -40,6 +45,13 @@ class OrderItemCoupon extends DataObject
         'Code'       => 'Varchar',
         'Amount'     => 'Price',
         'Percentage' => 'Percentage(6)',
+    ];
+
+    /**
+     * @var array
+     */
+    private static $has_many = [
+        'Purchasables' => OrderItemCouponPurchasable::class,
     ];
 
     /**
@@ -101,6 +113,12 @@ class OrderItemCoupon extends DataObject
     public function getCMSFields()
     {
         $this->beforeUpdateCMSFields(function (FieldList $fields) {
+            $purchasables = $fields->dataFieldByName('Purchasables');
+            if ($purchasables instanceof GridField) {
+                $purchasables->setConfig(GridFieldConfig_RecordViewer::create()
+                    ->removeComponentsByType(GridFieldViewButton::class));
+            }
+
             $fields->dataFieldByName('Amount')
                 ->setDescription('Please only enter one of amount or percentage.');
 

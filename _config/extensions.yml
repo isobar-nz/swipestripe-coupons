@@ -17,3 +17,15 @@ SwipeStripe\Order\Checkout\CheckoutFormRequestHandler:
 SwipeStripe\Order\Order:
   extensions:
   - SwipeStripe\Coupons\Order\OrderExtension
+
+---
+Only:
+  moduleexists: swipestripe/swipestripe-common
+---
+SwipeStripe\Common\Product\SimpleProduct:
+  extensions:
+  - SwipeStripe\Coupons\Order\OrderItem\CouponAware
+
+SwipeStripe\Common\Product\ComplexProduct\ComplexProductVariation:
+  extensions:
+  - SwipeStripe\Coupons\Order\OrderItem\CouponAware
