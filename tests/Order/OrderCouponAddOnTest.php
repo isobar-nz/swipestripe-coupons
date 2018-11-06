@@ -5,9 +5,9 @@ namespace SwipeStripe\Coupons\Tests\Order;
 
 use SilverStripe\Dev\SapphireTest;
 use SwipeStripe\Coupons\Order\OrderCoupon;
+use SwipeStripe\Coupons\Order\OrderCouponAddOn;
 use SwipeStripe\Coupons\Order\OrderExtension;
 use SwipeStripe\Coupons\Tests\Fixtures\Fixtures;
-use SwipeStripe\Coupons\Tests\Fixtures\PublishesFixtures;
 use SwipeStripe\Coupons\Tests\NeedsSupportedCurrencies;
 use SwipeStripe\Coupons\Tests\TestProduct;
 use SwipeStripe\Order\Order;
@@ -19,13 +19,12 @@ use SwipeStripe\Order\Order;
 class OrderCouponAddOnTest extends SapphireTest
 {
     use NeedsSupportedCurrencies;
-    use PublishesFixtures;
 
     /**
      * @var array
      */
     protected static $fixture_file = [
-        Fixtures::COUPONS,
+        Fixtures::ORDER_COUPONS,
         Fixtures::PRODUCTS,
     ];
 
@@ -58,18 +57,19 @@ class OrderCouponAddOnTest extends SapphireTest
     /**
      *
      */
-    public function testSetOrderCoupon()
+    public function testSetCoupon()
     {
         /** @var Order|OrderExtension $order */
         $order = Order::singleton()->createCart();
         /** @var OrderCoupon $coupon */
         $coupon = $this->objFromFixture(OrderCoupon::class, 'twenty-dollars');
 
-        $addOn = $order->getCouponAddOn();
-        $addOn->setOrderCoupon($coupon)
+        $addOn = OrderCouponAddOn::create();
+        $addOn->OrderID = $order->ID;
+        $addOn->setCoupon($coupon)
             ->write();
 
-        $this->assertSame($coupon->ID, $addOn->OrderCoupon()->ID);
+        $this->assertSame($coupon->ID, $addOn->Coupon()->ID);
         $this->assertTrue($addOn->Amount->getMoney()->equals(
             $coupon->AmountFor($order)->getMoney()
         ));
@@ -85,9 +85,6 @@ class OrderCouponAddOnTest extends SapphireTest
      */
     protected function setUp()
     {
-        $this->registerPublishingBlueprint(OrderCoupon::class);
-        $this->registerPublishingBlueprint(TestProduct::class);
-
         parent::setUp();
 
         $this->product = $this->objFromFixture(TestProduct::class, 'product');

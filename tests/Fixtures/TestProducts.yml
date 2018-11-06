@@ -4,3 +4,9 @@ SwipeStripe\Coupons\Tests\TestProduct:
     Description: This is a product.
     PriceCurrency: NZD
     PriceAmount: 1000 # $10.00
+
+  other-product:
+    Title: Other product
+    Description: This is a different product.
+    PriceCurrency: NZD
+    PriceAmount: 1500 # $15.00

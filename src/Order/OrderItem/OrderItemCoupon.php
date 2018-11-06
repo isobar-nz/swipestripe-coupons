@@ -1,39 +1,49 @@
 <?php
 declare(strict_types=1);
 
-namespace SwipeStripe\Coupons\Order;
+namespace SwipeStripe\Coupons\Order\OrderItem;
 
 use SilverStripe\Forms\FieldList;
+use SilverStripe\Forms\GridField\GridField;
+use SilverStripe\Forms\GridField\GridFieldConfig_RecordViewer;
+use SilverStripe\Forms\GridField\GridFieldViewButton;
 use SilverStripe\Forms\ToggleCompositeField;
 use SilverStripe\ORM\DataObject;
+use SilverStripe\ORM\DataQuery;
 use SilverStripe\ORM\FieldType\DBDatetime;
+use SilverStripe\ORM\HasManyList;
+use SilverStripe\ORM\SS_List;
 use SilverStripe\ORM\ValidationResult;
 use SilverStripe\Versioned\Versioned;
 use SwipeStripe\Coupons\CouponBehaviour;
-use SwipeStripe\Coupons\Order\OrderItem\OrderItemCoupon;
+use SwipeStripe\Coupons\Order\OrderCoupon;
 use SwipeStripe\Order\Order;
+use SwipeStripe\Order\OrderItem\OrderItem;
+use SwipeStripe\Order\PurchasableInterface;
 use SwipeStripe\Price\DBPrice;
 
 /**
- * Class OrderCoupon
- * @package SwipeStripe\Coupons\Order
+ * Class OrderItemCoupon
+ * @package SwipeStripe\Coupons\Order\OrderItem
  * @property string $Code
- * @property DBPrice $MinSubTotal
  * @property DBPrice $Amount
  * @property float $Percentage
  * @property DBPrice $MaxValue
  * @property string $ValidFrom
  * @property string $ValidUntil
+ * @property int $MinQuantity
+ * @property DBPrice $MinSubTotal
+ * @method HasManyList|OrderItemCouponPurchasable[] Purchasables()
  * @mixin Versioned
  */
-class OrderCoupon extends DataObject
+class OrderItemCoupon extends DataObject
 {
     use CouponBehaviour;
 
     /**
      * @var string
      */
-    private static $table_name = 'SwipeStripe_Coupons_OrderCoupon';
+    private static $table_name = 'SwipeStripe_Coupons_OrderItemCoupon';
 
     /**
      * @var array
@@ -41,12 +51,20 @@ class OrderCoupon extends DataObject
     private static $db = [
         'Title'       => 'Varchar',
         'Code'        => 'Varchar',
-        'MinSubTotal' => 'Price',
         'Amount'      => 'Price',
         'Percentage'  => 'Percentage(6)',
         'MaxValue'    => 'Price',
         'ValidFrom'   => 'Datetime',
         'ValidUntil'  => 'Datetime',
+        'MinQuantity' => 'Int',
+        'MinSubTotal' => 'Price',
+    ];
+
+    /**
+     * @var array
+     */
+    private static $has_many = [
+        'Purchasables' => OrderItemCouponPurchasable::class,
     ];
 
     /**
@@ -75,13 +93,19 @@ class OrderCoupon extends DataObject
     {
         $result = ValidationResult::create();
 
-        $orderSubTotal = $order->SubTotal()->getMoney();
-        if (!$orderSubTotal->greaterThanOrEqual($this->MinSubTotal->getMoney())) {
-            $result->addFieldError($fieldName, _t(self::class . '.SUBTOTAL_TOO_LOW',
-                'Sorry, the coupon "{title}" is only valid for orders of at least {min_total}.', [
-                    'title'     => $this->Title,
-                    'min_total' => $this->MinSubTotal->Nice(),
-                ]));
+        $anyItemsMeetRequirements = false;
+        foreach ($this->getApplicableOrderItems($order) as $item) {
+            if ($this->isActiveForItem($item)) {
+                $anyItemsMeetRequirements = true;
+                break;
+            }
+        }
+
+        if (!$anyItemsMeetRequirements) {
+            $result->addFieldError($fieldName, _t(self::class . '.NO_MATCHED_ITEMS', 'Sorry, the coupon ' .
+                '"{title}" is not valid for any items in your cart.', [
+                'title' => $this->Title,
+            ]));
         }
 
         /** @var DBDatetime $validFrom */
@@ -111,12 +135,61 @@ class OrderCoupon extends DataObject
     }
 
     /**
+     * @param OrderItem $item
+     * @return bool
+     */
+    public function isActiveForItem(OrderItem $item): bool
+    {
+        $active = $item->getQuantity() >= $this->MinQuantity &&
+            $item->SubTotal->getMoney()->greaterThanOrEqual($this->MinSubTotal->getMoney());
+
+        $this->extend('isActiveForItem', $item, $active);
+        return $active;
+    }
+
+    /**
+     * @param Order $order
+     * @return SS_List|OrderItem[]
+     */
+    public function getApplicableOrderItems(Order $order): SS_List
+    {
+        return $order->OrderItems()->alterDataQuery(function (DataQuery $query) {
+            $or = $query->disjunctiveGroup();
+
+            foreach ($this->Purchasables() as $purchasable) {
+                $or->conjunctiveGroup()->where([
+                    'PurchasableClass' => $purchasable->PurchasableClass,
+                    'PurchasableID'    => $purchasable->PurchasableID,
+                ]);
+            }
+        });
+    }
+
+    /**
+     * @param PurchasableInterface $purchasable
+     * @return bool
+     */
+    public function isApplicableFor(PurchasableInterface $purchasable): bool
+    {
+        return $this->Purchasables()->filter([
+            'PurchasableClass' => $purchasable->ClassName,
+            'PurchasableID'    => $purchasable->ID,
+        ])->exists();
+    }
+
+    /**
      * @inheritdoc
      * @codeCoverageIgnore
      */
     public function getCMSFields()
     {
         $this->beforeUpdateCMSFields(function (FieldList $fields) {
+            $purchasables = $fields->dataFieldByName('Purchasables');
+            if ($purchasables instanceof GridField) {
+                $purchasables->setConfig(GridFieldConfig_RecordViewer::create()
+                    ->removeComponentsByType(GridFieldViewButton::class));
+            }
+
             $fields->dataFieldByName('Amount')
                 ->setDescription('Please only enter one of amount or percentage.');
 
@@ -124,27 +197,34 @@ class OrderCoupon extends DataObject
                 ->setDescription('Enter a decimal value between 0 and 1 - e.g. 0.25 for 25% off. Please ' .
                     'only enter one of amount or percentage.');
 
-            $minSubTotal = $fields->dataFieldByName('MinSubTotal')
-                ->setTitle('Minimum Sub-Total')
-                ->setDescription('Minimum order sub-total (total of items and any item add-ons/coupons) ' .
-                    'for this coupon to be applied.');
-
             $fields->dataFieldByName('MaxValue')
                 ->setTitle('Maximum Coupon Value')
                 ->setDescription('The maximum value of this coupon - only valid for percent off coupons. ' .
-                    'E.g. 20% off, maximum discount of $50.');
+                    'E.g. 20% off, maximum discount of $10. Note that the maximum value is applied per item, not ' .
+                    'over the whole order. E.g. Up to $10 off shirts AND up to $10 off pants.');
 
             $validFrom = $fields->dataFieldByName('ValidFrom');
             $validUntil = $fields->dataFieldByName('ValidUntil');
+            $minQuantity = $fields->dataFieldByName('MinQuantity');
+            $minQuantity->setDescription('Minimum quantity of applicable item(s) for this coupon to  ' .
+                'apply. Quantity is tested against a single item - e.g. 2 shirts and 2 pants will not satisfy a ' .
+                'minimum quantity of 3.');
+
+            $minSubTotal = $fields->dataFieldByName('MinSubTotal')
+                ->setTitle('Minimum Sub-Total')
+                ->setDescription('Minimum item sub-total for this coupon to be applied (e.g. $10 of items).');
+
             $fields->removeByName([
-                'MinSubTotal',
                 'ValidFrom',
                 'ValidUntil',
+                'MinQuantity',
+                'MinSubTotal',
             ]);
-            $fields->insertAfter('MaxValue', ToggleCompositeField::create('Restrictions', 'Restrictions', [
-                $minSubTotal,
+            $fields->insertAfter('Percentage', ToggleCompositeField::create('Restrictions', 'Restrictions', [
                 $validFrom,
                 $validUntil,
+                $minQuantity,
+                $minSubTotal,
             ]));
         });
 
@@ -158,7 +238,7 @@ class OrderCoupon extends DataObject
     {
         $result = parent::validate();
 
-        $duplicateCode = static::getByCode($this->Code) ?? OrderItemCoupon::getByCode($this->Code);
+        $duplicateCode = static::getByCode($this->Code) ?? OrderCoupon::getByCode($this->Code);
         if ($duplicateCode instanceof self && $duplicateCode->ID === $this->ID) {
             // Don't mark self as duplicate
             $duplicateCode = null;
@@ -169,7 +249,7 @@ class OrderCoupon extends DataObject
         } elseif ($duplicateCode !== null) {
             $result->addFieldError('Code', _t(self::class . '.CODE_DUPLICATE',
                 'Another coupon with that code ("{other_coupon_title}") already exists. Code must be unique across ' .
-                'order and order item coupons.', [
+                'order item and order coupons.', [
                     'other_coupon_title' => $duplicateCode->Title,
                 ]));
         }
@@ -187,14 +267,19 @@ class OrderCoupon extends DataObject
                 'Amount should not be negative.'));
         }
 
-        if ($this->MaxValue->getMoney()->isNegative()) {
-            $result->addFieldError('MaxValue', _t(self::class . '.MAX_VALUE_NEGATIVE',
-                'Max value should not be negative.'));
-        }
-
         if (floatval($this->Percentage) < 0) {
             $result->addFieldError('Percentage', _t(self::class . '.PERCENTAGE_NEGATIVE',
                 'Percentage should not be negative.'));
+        }
+
+        if (intval($this->MinQuantity) < 0) {
+            $result->addFieldError('MinQuantity', _t(self::class . '.MINQUANTITY_NEGATIVE',
+                'Minimum quantity should not be negative.'));
+        }
+
+        if ($this->MaxValue->getMoney()->isNegative()) {
+            $result->addFieldError('MaxValue', _t(self::class . '.MAX_VALUE_NEGATIVE',
+                'Max value should not be negative.'));
         }
 
         if ($this->MinSubTotal->getMoney()->isNegative()) {
@@ -206,17 +291,17 @@ class OrderCoupon extends DataObject
     }
 
     /**
-     * @param Order $order
+     * @param OrderItem $orderItem
      * @return DBPrice
      */
-    public function AmountFor(Order $order): DBPrice
+    public function AmountFor(OrderItem $orderItem): DBPrice
     {
-        $orderSubTotal = $order->SubTotal()->getMoney();
+        $orderItemSubTotal = $orderItem->SubTotal->getMoney();
 
         if ($this->Amount->hasAmount()) {
             $couponAmount = $this->Amount->getMoney();
         } else {
-            $couponAmount = $orderSubTotal->multiply(floatval($this->Percentage));
+            $couponAmount = $orderItemSubTotal->multiply(floatval($this->Percentage));
             $maxValue = $this->MaxValue->getMoney();
 
             if (!$maxValue->isZero() && $couponAmount->greaterThan($maxValue)) {
@@ -224,13 +309,13 @@ class OrderCoupon extends DataObject
             }
         }
 
-        // If coupon is more than the order amount, coupon is worth sub-total.
-        // E.g. $20 coupon on $10 order makes it free, not -$10
-        if ($couponAmount->greaterThan($orderSubTotal)) {
-            $couponAmount = $orderSubTotal;
+        // If coupon is more than the item amount, coupon is worth sub-total.
+        // E.g. $20 coupon on $10 of items makes it free, not -$10
+        if ($couponAmount->greaterThan($orderItemSubTotal)) {
+            $couponAmount = $orderItemSubTotal;
         }
 
-        $this->extend('updateAmountFor', $order, $couponAmount);
+        $this->extend('updateAmountFor', $orderItem, $couponAmount);
 
         // Coupon amount should always be negative, so it lowers order total
         return DBPrice::create_field(DBPrice::INJECTOR_SPEC, $couponAmount->absolute()->negative());

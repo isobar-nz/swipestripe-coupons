@@ -8,8 +8,8 @@ use SilverStripe\Dev\SapphireTest;
 use SilverStripe\ORM\FieldType\DBDatetime;
 use SilverStripe\ORM\ValidationException;
 use SwipeStripe\Coupons\Order\OrderCoupon;
+use SwipeStripe\Coupons\Order\OrderItem\OrderItemCoupon;
 use SwipeStripe\Coupons\Tests\Fixtures\Fixtures;
-use SwipeStripe\Coupons\Tests\Fixtures\PublishesFixtures;
 use SwipeStripe\Coupons\Tests\NeedsSupportedCurrencies;
 use SwipeStripe\Coupons\Tests\TestProduct;
 use SwipeStripe\Coupons\Tests\WaitsMockTime;
@@ -22,15 +22,15 @@ use SwipeStripe\Order\Order;
 class OrderCouponTest extends SapphireTest
 {
     use NeedsSupportedCurrencies;
-    use PublishesFixtures;
     use WaitsMockTime;
 
     /**
      * @var array
      */
     protected static $fixture_file = [
-        Fixtures::COUPONS,
         Fixtures::PRODUCTS,
+        Fixtures::ITEM_COUPONS,
+        Fixtures::ORDER_COUPONS,
     ];
 
     /**
@@ -104,7 +104,7 @@ class OrderCouponTest extends SapphireTest
     {
         $coupon = OrderCoupon::create();
         $coupon->Title = 'Invalid';
-        $coupon->Percentage = -0.5;
+        $coupon->Percentage = 0.5;
         $coupon->Amount->setValue(new Money(500, $this->getSupportedCurrencies()->getDefaultCurrency()));
 
         $this->expectException(ValidationException::class);
@@ -128,6 +128,37 @@ class OrderCouponTest extends SapphireTest
 
         $this->expectException(ValidationException::class);
         $coupon2->write();
+    }
+
+    /**
+     *
+     */
+    public function testDuplicateCodeFromOrderItemCoupon()
+    {
+        /** @var OrderItemCoupon $orderItemCoupon */
+        $orderItemCoupon = OrderItemCoupon::get()->first();
+
+        $coupon = OrderCoupon::create();
+        $coupon->Title = 'Invalid';
+        $coupon->Code = $orderItemCoupon->Code;
+        $coupon->Percentage = 0.1;
+
+        $this->expectException(ValidationException::class);
+        $coupon->write();
+    }
+
+    /**
+     *
+     */
+    public function testWriteDoesntCauseDuplicateCode()
+    {
+        $coupon = OrderCoupon::get()->first();
+        $originalTitle = $coupon->Title;
+        $coupon->Title = 'Rename test';
+        $coupon->write();
+
+        $coupon->Title = $originalTitle;
+        $coupon->write();
     }
 
     /**
@@ -355,9 +386,6 @@ class OrderCouponTest extends SapphireTest
      */
     protected function setUp()
     {
-        $this->registerPublishingBlueprint(TestProduct::class);
-        $this->registerPublishingBlueprint(OrderCoupon::class);
-
         parent::setUp();
 
         $this->product = $this->objFromFixture(TestProduct::class, 'product');

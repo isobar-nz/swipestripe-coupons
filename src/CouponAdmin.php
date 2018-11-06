@@ -5,6 +5,7 @@ namespace SwipeStripe\Coupons;
 
 use SilverStripe\Admin\ModelAdmin;
 use SwipeStripe\Coupons\Order\OrderCoupon;
+use SwipeStripe\Coupons\Order\OrderItem\OrderItemCoupon;
 
 /**
  * Class CouponAdmin
@@ -34,5 +35,6 @@ class CouponAdmin extends ModelAdmin
      */
     private static $managed_models = [
         OrderCoupon::class,
+        OrderItemCoupon::class,
     ];
 }

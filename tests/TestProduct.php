@@ -6,6 +6,7 @@ namespace SwipeStripe\Coupons\Tests;
 use SilverStripe\ORM\DataObject;
 use SilverStripe\ORM\FieldType\DBVarchar;
 use SilverStripe\Versioned\Versioned;
+use SwipeStripe\Coupons\Order\OrderItem\CouponAware;
 use SwipeStripe\Order\PurchasableInterface;
 use SwipeStripe\Price\DBPrice;
 
@@ -31,6 +32,7 @@ class TestProduct extends DataObject implements PurchasableInterface
      */
     private static $extensions = [
         Versioned::class => Versioned::class . '.versioned',
+        CouponAware::class,
     ];
 
     /**
