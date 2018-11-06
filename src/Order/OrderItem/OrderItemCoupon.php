@@ -32,6 +32,7 @@ use SwipeStripe\Price\DBPrice;
  * @property string $ValidFrom
  * @property string $ValidUntil
  * @property int $MinQuantity
+ * @property DBPrice $MinSubTotal
  * @method HasManyList|OrderItemCouponPurchasable[] Purchasables()
  * @mixin Versioned
  */
@@ -56,6 +57,7 @@ class OrderItemCoupon extends DataObject
         'ValidFrom'   => 'Datetime',
         'ValidUntil'  => 'Datetime',
         'MinQuantity' => 'Int',
+        'MinSubTotal' => 'Price',
     ];
 
     /**
@@ -138,7 +140,8 @@ class OrderItemCoupon extends DataObject
      */
     public function isActiveForItem(OrderItem $item): bool
     {
-        $active = $item->getQuantity() >= $this->MinQuantity;
+        $active = $item->getQuantity() >= $this->MinQuantity &&
+            $item->SubTotal->getMoney()->greaterThanOrEqual($this->MinSubTotal->getMoney());
 
         $this->extend('isActiveForItem', $item, $active);
         return $active;
@@ -207,15 +210,21 @@ class OrderItemCoupon extends DataObject
                 'apply. Quantity is tested against a single item - e.g. 2 shirts and 2 pants will not satisfy a ' .
                 'minimum quantity of 3.');
 
+            $minSubTotal = $fields->dataFieldByName('MinSubTotal')
+                ->setTitle('Minimum Sub-Total')
+                ->setDescription('Minimum item sub-total for this coupon to be applied (e.g. $10 of items).');
+
             $fields->removeByName([
                 'ValidFrom',
                 'ValidUntil',
                 'MinQuantity',
+                'MinSubTotal',
             ]);
             $fields->insertAfter('Percentage', ToggleCompositeField::create('Restrictions', 'Restrictions', [
                 $validFrom,
                 $validUntil,
                 $minQuantity,
+                $minSubTotal,
             ]));
         });
 
@@ -271,6 +280,11 @@ class OrderItemCoupon extends DataObject
         if ($this->MaxValue->getMoney()->isNegative()) {
             $result->addFieldError('MaxValue', _t(self::class . '.MAX_VALUE_NEGATIVE',
                 'Max value should not be negative.'));
+        }
+
+        if ($this->MinSubTotal->getMoney()->isNegative()) {
+            $result->addFieldError('MinSubTotal', _t(self::class . '.MIN_SUBTOTAL_NEGATIVE',
+                'Minimum sub-total should not be negative.'));
         }
 
         return $result;

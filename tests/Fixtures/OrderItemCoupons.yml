@@ -33,6 +33,14 @@ SwipeStripe\Coupons\Order\OrderItem\OrderItemCoupon:
     MaxValueAmount: 500
     MaxValueCurrency: NZD
 
+  two-dollars-min-15:
+    Title: $2 off, min $15
+    Code: two-dollars-min-15
+    AmountAmount: 200
+    AmountCurrency: NZD
+    MinSubTotalAmount: 1500
+    MinSubTotalCurrency: NZD
+
 SwipeStripe\Coupons\Order\OrderItem\OrderItemCouponPurchasable:
   one:
     OrderItemCoupon: =>SwipeStripe\Coupons\Order\OrderItem\OrderItemCoupon.twenty-dollars
@@ -56,4 +64,8 @@ SwipeStripe\Coupons\Order\OrderItem\OrderItemCouponPurchasable:
 
   six:
     OrderItemCoupon: =>SwipeStripe\Coupons\Order\OrderItem\OrderItemCoupon.min-qty-2
+    Purchasable: =>SwipeStripe\Coupons\Tests\TestProduct.product
+
+  seven:
+    OrderItemCoupon: =>SwipeStripe\Coupons\Order\OrderItem\OrderItemCoupon.two-dollars-min-15
     Purchasable: =>SwipeStripe\Coupons\Tests\TestProduct.product
