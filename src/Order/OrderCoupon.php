@@ -112,6 +112,7 @@ class OrderCoupon extends DataObject
 
     /**
      * @inheritdoc
+     * @codeCoverageIgnore
      */
     public function getCMSFields()
     {

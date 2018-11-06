@@ -32,6 +32,7 @@ class CouponAware extends DataExtension
 
     /**
      * @inheritDoc
+     * @codeCoverageIgnore
      */
     public function updateCMSFields(FieldList $fields)
     {
