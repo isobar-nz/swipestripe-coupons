@@ -7,10 +7,12 @@ use SilverStripe\Dev\SapphireTest;
 use SwipeStripe\Coupons\Order\OrderExtension;
 use SwipeStripe\Coupons\Order\OrderItem\OrderItemCoupon;
 use SwipeStripe\Coupons\Order\OrderItem\OrderItemCouponAddOn;
+use SwipeStripe\Coupons\Order\OrderItem\OrderItemExtension;
 use SwipeStripe\Coupons\Tests\Fixtures\Fixtures;
 use SwipeStripe\Coupons\Tests\NeedsSupportedCurrencies;
 use SwipeStripe\Coupons\Tests\TestProduct;
 use SwipeStripe\Order\Order;
+use SwipeStripe\Order\OrderItem\OrderItem;
 
 /**
  * Class OrderItemCouponAddOnTest
@@ -79,4 +81,27 @@ class OrderItemCouponAddOnTest extends SapphireTest
             $coupon->AmountFor($orderItem)->getMoney()
         ));
     }
+
+    /**
+     *
+     */
+    public function testIsActive()
+    {
+        /** @var Order|OrderExtension $order */
+        $order = Order::singleton()->createCart();
+        /** @var TestProduct $product */
+        $product = $this->objFromFixture(TestProduct::class, 'product');
+        /** @var OrderItemCoupon$coupon */
+        $coupon = $this->objFromFixture(OrderItemCoupon::class, 'min-qty-2');
+
+        $order->addItem($product, 2);
+        /** @var OrderItem|OrderItemExtension $orderItem */
+        $orderItem = $order->getOrderItem($product);
+        $orderItem->applyCoupon($coupon);
+        $this->assertTrue($orderItem->OrderItemAddOns()->first()->isActive());
+
+        $orderItem->setQuantity(1);
+        $this->assertFalse($orderItem->OrderItemAddOns()->first()->isActive());
+    }
+
 }

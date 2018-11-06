@@ -30,6 +30,7 @@ use SwipeStripe\Price\DBPrice;
  * @property float $Percentage
  * @property string $ValidFrom
  * @property string $ValidUntil
+ * @property int $MinQuantity
  * @method HasManyList|OrderItemCouponPurchasable[] Purchasables()
  * @mixin Versioned
  */
@@ -46,12 +47,13 @@ class OrderItemCoupon extends DataObject
      * @var array
      */
     private static $db = [
-        'Title'      => 'Varchar',
-        'Code'       => 'Varchar',
-        'Amount'     => 'Price',
-        'Percentage' => 'Percentage(6)',
-        'ValidFrom'  => 'Datetime',
-        'ValidUntil' => 'Datetime',
+        'Title'       => 'Varchar',
+        'Code'        => 'Varchar',
+        'Amount'      => 'Price',
+        'Percentage'  => 'Percentage(6)',
+        'ValidFrom'   => 'Datetime',
+        'ValidUntil'  => 'Datetime',
+        'MinQuantity' => 'Int',
     ];
 
     /**
@@ -134,7 +136,7 @@ class OrderItemCoupon extends DataObject
      */
     public function isActiveForItem(OrderItem $item): bool
     {
-        $active = true;
+        $active = $item->getQuantity() >= $this->MinQuantity;
 
         $this->extend('isActiveForItem', $item, $active);
         return $active;
@@ -191,13 +193,20 @@ class OrderItemCoupon extends DataObject
 
             $validFrom = $fields->dataFieldByName('ValidFrom');
             $validUntil = $fields->dataFieldByName('ValidUntil');
+            $minQuantity = $fields->dataFieldByName('MinQuantity');
+            $minQuantity->setDescription('Minimum quantity of applicable item(s) for this coupon to  ' .
+                'apply. Quantity is tested against a single item - e.g. 2 shirts and 2 pants will not satisfy a ' .
+                'minimum quantity of 3.');
+
             $fields->removeByName([
                 'ValidFrom',
                 'ValidUntil',
+                'MinQuantity',
             ]);
             $fields->insertAfter('Percentage', ToggleCompositeField::create('Restrictions', 'Restrictions', [
                 $validFrom,
                 $validUntil,
+                $minQuantity,
             ]));
         });
 
@@ -243,6 +252,11 @@ class OrderItemCoupon extends DataObject
         if (floatval($this->Percentage) < 0) {
             $result->addFieldError('Percentage', _t(self::class . '.PERCENTAGE_NEGATIVE',
                 'Percentage should not be negative.'));
+        }
+
+        if (intval($this->MinQuantity) < 0) {
+            $result->addFieldError('MinQuantity', _t(self::class . '.MINQUANTITY_NEGATIVE',
+                'Minimum quantity should not be negative.'));
         }
 
         return $result;

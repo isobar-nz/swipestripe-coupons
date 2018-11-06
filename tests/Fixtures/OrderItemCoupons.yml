@@ -20,6 +20,12 @@ SwipeStripe\Coupons\Order\OrderItem\OrderItemCoupon:
     Code: valid-to-from
     Percentage: 0.01
 
+  min-qty-2:
+    Title: Need 2 quantity
+    Code: min-qty-2
+    Percentage: 0.1
+    MinQuantity: 2
+
 SwipeStripe\Coupons\Order\OrderItem\OrderItemCouponPurchasable:
   one:
     OrderItemCoupon: =>SwipeStripe\Coupons\Order\OrderItem\OrderItemCoupon.twenty-dollars
@@ -39,4 +45,8 @@ SwipeStripe\Coupons\Order\OrderItem\OrderItemCouponPurchasable:
 
   five:
     OrderItemCoupon: =>SwipeStripe\Coupons\Order\OrderItem\OrderItemCoupon.valid-to-from
+    Purchasable: =>SwipeStripe\Coupons\Tests\TestProduct.product
+
+  six:
+    OrderItemCoupon: =>SwipeStripe\Coupons\Order\OrderItem\OrderItemCoupon.min-qty-2
     Purchasable: =>SwipeStripe\Coupons\Tests\TestProduct.product

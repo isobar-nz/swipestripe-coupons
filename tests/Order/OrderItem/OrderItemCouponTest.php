@@ -9,11 +9,13 @@ use SilverStripe\ORM\FieldType\DBDatetime;
 use SilverStripe\ORM\ValidationException;
 use SwipeStripe\Coupons\Order\OrderCoupon;
 use SwipeStripe\Coupons\Order\OrderItem\OrderItemCoupon;
+use SwipeStripe\Coupons\Order\OrderItem\OrderItemExtension;
 use SwipeStripe\Coupons\Tests\Fixtures\Fixtures;
 use SwipeStripe\Coupons\Tests\NeedsSupportedCurrencies;
 use SwipeStripe\Coupons\Tests\TestProduct;
 use SwipeStripe\Coupons\Tests\WaitsMockTime;
 use SwipeStripe\Order\Order;
+use SwipeStripe\Order\OrderItem\OrderItem;
 
 /**
  * Class OrderItemCouponTest
@@ -106,6 +108,20 @@ class OrderItemCouponTest extends SapphireTest
         $coupon->Title = 'Invalid';
         $coupon->Percentage = 0.5;
         $coupon->Amount->setValue(new Money(500, $this->getSupportedCurrencies()->getDefaultCurrency()));
+
+        $this->expectException(ValidationException::class);
+        $coupon->write();
+    }
+
+    /**
+     *
+     */
+    public function testNegativeMinQuantity()
+    {
+        $coupon = OrderItemCoupon::create();
+        $coupon->Title = 'Invalid';
+        $coupon->Percentage = 0.5;
+        $coupon->MinQuantity = -1;
 
         $this->expectException(ValidationException::class);
         $coupon->write();
@@ -390,6 +406,22 @@ class OrderItemCouponTest extends SapphireTest
 
         $this->mockWait(45);
         $this->assertFalse($coupon->isValidFor($order)->isValid());
+    }
+
+    /**
+     *
+     */
+    public function testIsActiveForMinQuantity()
+    {
+        $order = Order::singleton()->createCart();
+        $orderItem = $order->getOrderItem($this->product);
+
+        /** @var OrderItemCoupon$coupon */
+        $coupon = $this->objFromFixture(OrderItemCoupon::class, 'min-qty-2');
+        $this->assertFalse($coupon->isActiveForItem($orderItem));
+
+        $orderItem->setQuantity(2);
+        $this->assertTrue($coupon->isActiveForItem($orderItem));
     }
 
     /**
