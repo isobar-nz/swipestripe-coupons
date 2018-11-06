@@ -28,6 +28,7 @@ use SwipeStripe\Price\DBPrice;
  * @property string $Code
  * @property DBPrice $Amount
  * @property float $Percentage
+ * @property DBPrice $MaxValue
  * @property string $ValidFrom
  * @property string $ValidUntil
  * @property int $MinQuantity
@@ -51,6 +52,7 @@ class OrderItemCoupon extends DataObject
         'Code'        => 'Varchar',
         'Amount'      => 'Price',
         'Percentage'  => 'Percentage(6)',
+        'MaxValue'    => 'Price',
         'ValidFrom'   => 'Datetime',
         'ValidUntil'  => 'Datetime',
         'MinQuantity' => 'Int',
@@ -192,6 +194,12 @@ class OrderItemCoupon extends DataObject
                 ->setDescription('Enter a decimal value between 0 and 1 - e.g. 0.25 for 25% off. Please ' .
                     'only enter one of amount or percentage.');
 
+            $fields->dataFieldByName('MaxValue')
+                ->setTitle('Maximum Coupon Value')
+                ->setDescription('The maximum value of this coupon - only valid for percent off coupons. ' .
+                    'E.g. 20% off, maximum discount of $10. Note that the maximum value is applied per item, not ' .
+                    'over the whole order. E.g. Up to $10 off shirts AND up to $10 off pants.');
+
             $validFrom = $fields->dataFieldByName('ValidFrom');
             $validUntil = $fields->dataFieldByName('ValidUntil');
             $minQuantity = $fields->dataFieldByName('MinQuantity');
@@ -260,6 +268,11 @@ class OrderItemCoupon extends DataObject
                 'Minimum quantity should not be negative.'));
         }
 
+        if ($this->MaxValue->getMoney()->isNegative()) {
+            $result->addFieldError('MaxValue', _t(self::class . '.MAX_VALUE_NEGATIVE',
+                'Max value should not be negative.'));
+        }
+
         return $result;
     }
 
@@ -275,6 +288,11 @@ class OrderItemCoupon extends DataObject
             $couponAmount = $this->Amount->getMoney();
         } else {
             $couponAmount = $orderItemSubTotal->multiply(floatval($this->Percentage));
+            $maxValue = $this->MaxValue->getMoney();
+
+            if (!$maxValue->isZero() && $couponAmount->greaterThan($maxValue)) {
+                $couponAmount = $maxValue;
+            }
         }
 
         // If coupon is more than the item amount, coupon is worth sub-total.
@@ -283,7 +301,7 @@ class OrderItemCoupon extends DataObject
             $couponAmount = $orderItemSubTotal;
         }
 
-        $this->extend('updateAmountFor', $order, $couponAmount);
+        $this->extend('updateAmountFor', $orderItem, $couponAmount);
 
         // Coupon amount should always be negative, so it lowers order total
         return DBPrice::create_field(DBPrice::INJECTOR_SPEC, $couponAmount->absolute()->negative());

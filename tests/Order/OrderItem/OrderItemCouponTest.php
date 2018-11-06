@@ -9,13 +9,11 @@ use SilverStripe\ORM\FieldType\DBDatetime;
 use SilverStripe\ORM\ValidationException;
 use SwipeStripe\Coupons\Order\OrderCoupon;
 use SwipeStripe\Coupons\Order\OrderItem\OrderItemCoupon;
-use SwipeStripe\Coupons\Order\OrderItem\OrderItemExtension;
 use SwipeStripe\Coupons\Tests\Fixtures\Fixtures;
 use SwipeStripe\Coupons\Tests\NeedsSupportedCurrencies;
 use SwipeStripe\Coupons\Tests\TestProduct;
 use SwipeStripe\Coupons\Tests\WaitsMockTime;
 use SwipeStripe\Order\Order;
-use SwipeStripe\Order\OrderItem\OrderItem;
 
 /**
  * Class OrderItemCouponTest
@@ -219,6 +217,20 @@ class OrderItemCouponTest extends SapphireTest
     /**
      *
      */
+    public function testNegativeMaxValue()
+    {
+        $coupon = OrderItemCoupon::create();
+        $coupon->Title = 'Invalid';
+        $coupon->Percentage = 0.5;
+        $coupon->MaxValue->setValue(new Money(-10, $this->getSupportedCurrencies()->getDefaultCurrency()));
+
+        $this->expectException(ValidationException::class);
+        $coupon->write();
+    }
+
+    /**
+     *
+     */
     public function testFlatAmountFor()
     {
         /** @var OrderItemCoupon $twentyDollars */
@@ -267,6 +279,33 @@ class OrderItemCouponTest extends SapphireTest
         $orderItem->setQuantity(3);
         $this->assertTrue($twentyPercent->AmountFor($orderItem)->getMoney()->equals(
             new Money(-600, $this->getSupportedCurrencies()->getDefaultCurrency())
+        ));
+    }
+
+    /**
+     *
+     */
+    public function testPercentageAmountForMaxValue()
+    {
+        /** @var OrderItemCoupon $coupon */
+        $coupon = $this->objFromFixture(OrderItemCoupon::class, 'twenty-percent-max-5');
+
+        $orderItem = Order::singleton()->createCart()->getOrderItem($this->product);
+        $this->assertTrue($coupon->AmountFor($orderItem)->getMoney()->isZero());
+
+        $orderItem->setQuantity(1);
+        $this->assertTrue($coupon->AmountFor($orderItem)->getMoney()->equals(
+            new Money(-200, $this->getSupportedCurrencies()->getDefaultCurrency())
+        ));
+
+        $orderItem->setQuantity(2);
+        $this->assertTrue($coupon->AmountFor($orderItem)->getMoney()->equals(
+            new Money(-400, $this->getSupportedCurrencies()->getDefaultCurrency())
+        ));
+
+        $orderItem->setQuantity(3);
+        $this->assertTrue($coupon->AmountFor($orderItem)->getMoney()->equals(
+            new Money(-500, $this->getSupportedCurrencies()->getDefaultCurrency())
         ));
     }
 
