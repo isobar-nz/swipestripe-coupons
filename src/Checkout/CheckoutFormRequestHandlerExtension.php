@@ -9,7 +9,7 @@ use SwipeStripe\Coupons\Order\OrderCoupon;
 use SwipeStripe\Coupons\Order\OrderExtension;
 use SwipeStripe\Coupons\Order\OrderItem\OrderItemCoupon;
 use SwipeStripe\Coupons\Order\OrderItem\OrderItemExtension;
-use SwipeStripe\Order\Checkout\CheckoutForm;
+use SwipeStripe\Order\Checkout\CheckoutFormInterface;
 use SwipeStripe\Order\Checkout\CheckoutFormRequestHandler;
 use SwipeStripe\Order\Order;
 use SwipeStripe\Order\OrderItem\OrderItem;
@@ -23,10 +23,10 @@ class CheckoutFormRequestHandlerExtension extends Extension
 {
     /**
      * @param array $data
-     * @param CheckoutForm|CheckoutFormExtension $form
+     * @param CheckoutFormInterface $form
      * @return HTTPResponse
      */
-    public function ApplyCoupon(array $data, CheckoutForm $form): HTTPResponse
+    public function ApplyCoupon(array $data, CheckoutFormInterface $form): HTTPResponse
     {
         $code = $data[CheckoutFormExtension::COUPON_CODE_FIELD];
         if (empty($code)) {
@@ -46,7 +46,7 @@ class CheckoutFormRequestHandlerExtension extends Extension
                 $order->clearAppliedOrderCoupons();
                 $order->clearAppliedOrderItemCoupons();
                 /** @var OrderItem|OrderItemExtension $orderItem */
-                foreach ($orderItemCoupon->getApplicableOrderItems($form->getCart()) as $orderItem) {
+                foreach ($orderItemCoupon->getApplicableOrderItems($order) as $orderItem) {
                     $orderItem->applyCoupon($orderItemCoupon);
                 }
             }
@@ -57,10 +57,10 @@ class CheckoutFormRequestHandlerExtension extends Extension
 
     /**
      * @param array $data
-     * @param CheckoutForm $form
+     * @param CheckoutFormInterface $form
      * @return HTTPResponse
      */
-    public function RemoveAppliedCoupons(array $data, CheckoutForm $form): HTTPResponse
+    public function RemoveAppliedCoupons(array $data, CheckoutFormInterface $form): HTTPResponse
     {
         $order = $this->getMutableCart($form);
         $order->clearAppliedOrderCoupons();
@@ -70,10 +70,10 @@ class CheckoutFormRequestHandlerExtension extends Extension
     }
 
     /**
-     * @param CheckoutForm|CheckoutFormExtension $form
+     * @param CheckoutFormInterface $form
      * @return Order|OrderExtension
      */
-    protected function getMutableCart(CheckoutForm $form): Order
+    protected function getMutableCart(CheckoutFormInterface $form): Order
     {
         $cart = $form->getCart();
         if ($cart->IsMutable()) {

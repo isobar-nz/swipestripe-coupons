@@ -7,7 +7,7 @@ use SilverStripe\Core\Extension;
 use SwipeStripe\Coupons\Order\OrderCoupon;
 use SwipeStripe\Coupons\Order\OrderExtension;
 use SwipeStripe\Coupons\Order\OrderItem\OrderItemCoupon;
-use SwipeStripe\Order\Checkout\CheckoutForm;
+use SwipeStripe\Order\Checkout\CheckoutFormInterface;
 use SwipeStripe\Order\Checkout\CheckoutFormValidator;
 use SwipeStripe\Order\Order;
 
@@ -19,10 +19,10 @@ use SwipeStripe\Order\Order;
 class CheckoutFormValidatorExtension extends Extension
 {
     /**
-     * @param CheckoutForm $form
+     * @param CheckoutFormInterface $form
      * @param array $data
      */
-    public function validate(CheckoutForm $form, array $data): void
+    public function validate(CheckoutFormInterface $form, array $data): void
     {
         $this->owner->validateAppliedCoupons($form->getCart());
 
