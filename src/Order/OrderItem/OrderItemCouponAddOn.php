@@ -47,4 +47,12 @@ class OrderItemCouponAddOn extends OrderItemAddOn
     {
         return $this->Coupon()->AmountFor($this->OrderItem());
     }
+
+    /**
+     * @inheritDoc
+     */
+    public function isActive(): bool
+    {
+        return parent::isActive() && $this->Coupon()->isActiveForItem($this->OrderItem());
+    }
 }

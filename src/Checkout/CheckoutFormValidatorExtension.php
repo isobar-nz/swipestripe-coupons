@@ -52,9 +52,5 @@ class CheckoutFormValidatorExtension extends Extension
         foreach ($cart->OrderCouponAddOns() as $addOn) {
             $result->combineAnd($addOn->Coupon()->isValidFor($cart));
         }
-
-        foreach ($cart->OrderItemCouponAddOns() as $addOn) {
-            $result->combineAnd($addOn->Coupon()->isValidFor($cart));
-        }
     }
 }

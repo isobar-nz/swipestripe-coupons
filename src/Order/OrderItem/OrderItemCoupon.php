@@ -87,7 +87,15 @@ class OrderItemCoupon extends DataObject
     {
         $result = ValidationResult::create();
 
-        if ($this->getApplicableOrderItems($order)->count() === 0) {
+        $anyItemsMeetRequirements = false;
+        foreach ($this->getApplicableOrderItems($order) as $item) {
+            if ($this->isActiveForItem($item)) {
+                $anyItemsMeetRequirements = true;
+                break;
+            }
+        }
+
+        if (!$anyItemsMeetRequirements) {
             $result->addFieldError($fieldName, _t(self::class . '.NO_MATCHED_ITEMS', 'Sorry, the coupon ' .
                 '"{title}" is not valid for any items in your cart.', [
                 'title' => $this->Title,
@@ -118,6 +126,18 @@ class OrderItemCoupon extends DataObject
 
         $this->extend('isValidFor', $order, $fieldName, $result);
         return $result;
+    }
+
+    /**
+     * @param OrderItem $item
+     * @return bool
+     */
+    public function isActiveForItem(OrderItem $item): bool
+    {
+        $active = true;
+
+        $this->extend('isActiveForItem', $item, $active);
+        return $active;
     }
 
     /**
