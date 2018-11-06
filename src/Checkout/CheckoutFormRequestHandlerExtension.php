@@ -33,17 +33,16 @@ class CheckoutFormRequestHandlerExtension extends Extension
             return $this->owner->redirectBack();
         }
 
-        /** @var Order|OrderExtension $order */
-        $order = $form->getCart();
         $orderCoupon = OrderCoupon::getByCode($code);
-
         if ($orderCoupon !== null) {
+            $order = $this->getMutableCart($form);
             $order->clearAppliedOrderCoupons();
             $order->clearAppliedOrderItemCoupons();
             $order->applyCoupon($orderCoupon);
         } else {
             $orderItemCoupon = OrderItemCoupon::getByCode($code);
             if ($orderItemCoupon !== null) {
+                $order = $this->getMutableCart($form);
                 $order->clearAppliedOrderCoupons();
                 $order->clearAppliedOrderItemCoupons();
                 /** @var OrderItem|OrderItemExtension $orderItem */
@@ -63,11 +62,32 @@ class CheckoutFormRequestHandlerExtension extends Extension
      */
     public function RemoveAppliedCoupons(array $data, CheckoutForm $form): HTTPResponse
     {
-        /** @var Order|OrderExtension $order */
-        $order = $form->getCart();
+        $order = $this->getMutableCart($form);
         $order->clearAppliedOrderCoupons();
         $order->clearAppliedOrderItemCoupons();
 
         return $this->owner->redirectBack();
+    }
+
+    /**
+     * @param CheckoutForm|CheckoutFormExtension $form
+     * @return Order|OrderExtension
+     */
+    protected function getMutableCart(CheckoutForm $form): Order
+    {
+        $cart = $form->getCart();
+        if ($cart->IsMutable()) {
+            return $cart;
+        }
+
+        $clone = $cart->duplicate();
+        $clone->Unlock();
+        $form->setCart($clone);
+
+        if ($cart->ID === $this->owner->ActiveCart->ID) {
+            $this->owner->setActiveCart($clone);
+        }
+
+        return $clone;
     }
 }

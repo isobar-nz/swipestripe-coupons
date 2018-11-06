@@ -7,6 +7,7 @@ use SilverStripe\ORM\DataExtension;
 use SilverStripe\ORM\DataList;
 use SwipeStripe\Coupons\Order\OrderItem\OrderItemCouponAddOn;
 use SwipeStripe\Order\Order;
+use SwipeStripe\Order\OrderLockedException;
 
 /**
  * Class OrderExtension
@@ -57,6 +58,10 @@ class OrderExtension extends DataExtension
      */
     public function clearAppliedOrderCoupons(): int
     {
+        if (!$this->owner->IsMutable()) {
+            throw new OrderLockedException($this->owner);
+        }
+
         $count = 0;
 
         foreach ($this->owner->OrderCouponAddOns() as $addOn) {
@@ -72,6 +77,10 @@ class OrderExtension extends DataExtension
      */
     public function clearAppliedOrderItemCoupons(): int
     {
+        if (!$this->owner->IsMutable()) {
+            throw new OrderLockedException($this->owner);
+        }
+
         $count = 0;
 
         foreach ($this->owner->OrderItemCouponAddOns() as $addOn) {
