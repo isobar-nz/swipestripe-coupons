@@ -25,7 +25,8 @@ class CheckoutFormExtension extends Extension
      */
     public function updateFields(FieldList $fields): void
     {
-        $fields->add(TextField::create(static::COUPON_CODE_FIELD));
+        $fields->add(TextField::create(static::COUPON_CODE_FIELD,
+            _t(self::class . '.COUPON_CODE', 'Coupon Code')));
     }
 
     /**
@@ -38,11 +39,13 @@ class CheckoutFormExtension extends Extension
 
         if ($cart->hasCoupons()) {
             $actions->unshift(
-                FormAction::create('RemoveAppliedCoupons', 'Remove Applied Coupon(s)')
+                FormAction::create('RemoveAppliedCoupons',
+                    _t(self::class . '.REMOVE_APPLIED_COUPONS', 'Remove Applied Coupon(s)'))
                     ->setValidationExempt()
             );
         }
 
-        $actions->unshift(FormAction::create('ApplyCoupon', 'Apply Coupon'));
+        $actions->unshift(FormAction::create('ApplyCoupon',
+            _t(self::class . '.APPLY_COUPON', 'Apply Coupon')));
     }
 }
