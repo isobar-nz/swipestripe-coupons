@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace SwipeStripe\Coupons\Order\OrderItem;
 
 use SwipeStripe\Order\OrderItem\OrderItemAddOn;
+use SwipeStripe\Order\OrderLockedException;
 use SwipeStripe\Price\DBPrice;
 
 /**
@@ -32,6 +33,10 @@ class OrderItemCouponAddOn extends OrderItemAddOn
      */
     public function setCoupon(OrderItemCoupon $coupon): self
     {
+        if (!$this->OrderItem()->IsMutable()) {
+            throw new OrderLockedException($this->OrderItem());
+        }
+
         $this->CouponID = $coupon->ID;
         $this->Title = _t(self::class . '.ADDON_TITLE', 'Coupon - {coupon_title}', [
             'coupon_title' => $coupon->Title,
