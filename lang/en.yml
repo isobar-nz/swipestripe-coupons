@@ -1,0 +1,64 @@
+en:
+  SwipeStripe\Coupons\Checkout\CheckoutFormExtension:
+    APPLY_COUPON: 'Apply Coupon'
+    COUPON_CODE: 'Coupon Code'
+    REMOVE_APPLIED_COUPONS: 'Remove Applied Coupon(s)'
+  SwipeStripe\Coupons\Checkout\CheckoutFormValidatorExtension:
+    COUPON_INVALID: 'Sorry, that coupon code is invalid.'
+  SwipeStripe\Coupons\CouponAdmin:
+    MENUTITLE: Coupons
+  SwipeStripe\Coupons\Order\OrderCoupon:
+    AMOUNT_NEGATIVE: 'Amount should not be negative.'
+    AMOUNT_PERCENTAGE_BOTH_SET: 'Please set only one of amount and percentage. The other should be zero.'
+    AMOUNT_PERCENTAGE_EMPTY: 'One of amount or percentage must be set.'
+    CODE_DUPLICATE: 'Another coupon with that code ("{other_coupon_title}") already exists. Code must be unique across order and order item coupons.'
+    CODE_EMPTY: 'Code cannot be empty.'
+    MAX_VALUE_NEGATIVE: 'Max value should not be negative.'
+    MIN_SUBTOTAL_NEGATIVE: 'Minimum sub-total should not be negative.'
+    PERCENTAGE_NEGATIVE: 'Percentage should not be negative.'
+    PLURALNAME: 'Order Coupons'
+    PLURALS:
+      one: 'An Order Coupon'
+      other: '{count} Order Coupons'
+    SINGULARNAME: 'Order Coupon'
+    SUBTOTAL_TOO_LOW: 'Sorry, the coupon "{title}" is only valid for orders of at least {min_total}.'
+    TOO_EARLY: 'Sorry, the coupon "{title}" is not valid before {valid_from}.'
+    TOO_LATE: 'Sorry, the coupon "{title}" expired at {valid_until}.'
+  SwipeStripe\Coupons\Order\OrderCouponAddOn:
+    ADDON_TITLE: 'Coupon - {coupon_title}'
+    PLURALNAME: 'Order Coupon Add Ons'
+    PLURALS:
+      one: 'An Order Coupon Add On'
+      other: '{count} Order Coupon Add Ons'
+    SINGULARNAME: 'Order Coupon Add On'
+  SwipeStripe\Coupons\Order\OrderItem\OrderItemCoupon:
+    AMOUNT_NEGATIVE: 'Amount should not be negative.'
+    AMOUNT_PERCENTAGE_BOTH_SET: 'Please set only one of amount and percentage. The other should be zero.'
+    AMOUNT_PERCENTAGE_EMPTY: 'One of amount or percentage must be set.'
+    CODE_DUPLICATE: 'Another coupon with that code ("{other_coupon_title}") already exists. Code must be unique across order item and order coupons.'
+    CODE_EMPTY: 'Code cannot be empty.'
+    MAX_VALUE_NEGATIVE: 'Max value should not be negative.'
+    MINQUANTITY_NEGATIVE: 'Minimum quantity should not be negative.'
+    MIN_SUBTOTAL_NEGATIVE: 'Minimum sub-total should not be negative.'
+    NO_MATCHED_ITEMS: 'Sorry, the coupon "{title}" is not valid for any items in your cart.'
+    PERCENTAGE_NEGATIVE: 'Percentage should not be negative.'
+    PLURALNAME: 'Order Item Coupons'
+    PLURALS:
+      one: 'An Order Item Coupon'
+      other: '{count} Order Item Coupons'
+    SINGULARNAME: 'Order Item Coupon'
+    TOO_EARLY: 'Sorry, the coupon "{title}" is not valid before {valid_from}.'
+    TOO_LATE: 'Sorry, the coupon "{title}" expired at {valid_until}.'
+  SwipeStripe\Coupons\Order\OrderItem\OrderItemCouponAddOn:
+    ADDON_TITLE: 'Coupon - {coupon_title}'
+    PLURALNAME: 'Order Item Coupon Add Ons'
+    PLURALS:
+      one: 'An Order Item Coupon Add On'
+      other: '{count} Order Item Coupon Add Ons'
+    SINGULARNAME: 'Order Item Coupon Add On'
+  SwipeStripe\Coupons\Order\OrderItem\OrderItemCouponPurchasable:
+    PLURALNAME: 'Order Item Coupon Purchasables'
+    PLURALS:
+      one: 'An Order Item Coupon Purchasable'
+      other: '{count} Order Item Coupon Purchasables'
+    SINGULARNAME: 'Order Item Coupon Purchasable'
