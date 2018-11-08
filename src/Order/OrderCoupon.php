@@ -3,8 +3,9 @@ declare(strict_types=1);
 
 namespace SwipeStripe\Coupons\Order;
 
+use SilverStripe\Forms\FieldGroup;
 use SilverStripe\Forms\FieldList;
-use SilverStripe\Forms\ToggleCompositeField;
+use SilverStripe\Forms\Tab;
 use SilverStripe\ORM\DataObject;
 use SilverStripe\ORM\FieldType\DBDatetime;
 use SilverStripe\ORM\ValidationResult;
@@ -137,15 +138,18 @@ class OrderCoupon extends DataObject
             $validFrom = $fields->dataFieldByName('ValidFrom');
             $validUntil = $fields->dataFieldByName('ValidUntil');
             $fields->removeByName([
-                'MinSubTotal',
-                'ValidFrom',
-                'ValidUntil',
+                $minSubTotal->getName(),
+                $validFrom->getName(),
+                $validUntil->getName(),
             ]);
-            $fields->insertAfter('MaxValue', ToggleCompositeField::create('Restrictions', 'Restrictions', [
+
+            $fields->insertAfter('Main', Tab::create('Restrictions',
                 $minSubTotal,
-                $validFrom,
-                $validUntil,
-            ]));
+                FieldGroup::create('Time Period', [
+                    $validFrom,
+                    $validUntil,
+                ])->setDescription($validFrom->getDescription())
+            ));
         });
 
         return parent::getCMSFields();

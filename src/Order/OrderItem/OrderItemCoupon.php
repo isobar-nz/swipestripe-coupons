@@ -3,11 +3,12 @@ declare(strict_types=1);
 
 namespace SwipeStripe\Coupons\Order\OrderItem;
 
+use SilverStripe\Forms\FieldGroup;
 use SilverStripe\Forms\FieldList;
 use SilverStripe\Forms\GridField\GridField;
 use SilverStripe\Forms\GridField\GridFieldConfig_RecordViewer;
 use SilverStripe\Forms\GridField\GridFieldViewButton;
-use SilverStripe\Forms\ToggleCompositeField;
+use SilverStripe\Forms\Tab;
 use SilverStripe\ORM\DataObject;
 use SilverStripe\ORM\DataQuery;
 use SilverStripe\ORM\FieldType\DBDatetime;
@@ -208,27 +209,30 @@ class OrderItemCoupon extends DataObject
 
             $validFrom = $fields->dataFieldByName('ValidFrom');
             $validUntil = $fields->dataFieldByName('ValidUntil');
-            $minQuantity = $fields->dataFieldByName('MinQuantity');
-            $minQuantity->setDescription('Minimum quantity of applicable item(s) for this coupon to  ' .
-                'apply. Quantity is tested against a single item - e.g. 2 shirts and 2 pants will not satisfy a ' .
-                'minimum quantity of 3.');
+            $minQuantity = $fields->dataFieldByName('MinQuantity')
+                ->setDescription('Minimum quantity of applicable item(s) for this coupon to  ' .
+                    'apply. Quantity is tested against a single item - e.g. 2 shirts and 2 pants will not satisfy a ' .
+                    'minimum quantity of 3.');
 
             $minSubTotal = $fields->dataFieldByName('MinSubTotal')
                 ->setTitle('Minimum Sub-Total')
                 ->setDescription('Minimum item sub-total for this coupon to be applied (e.g. $10 of items).');
 
             $fields->removeByName([
-                'ValidFrom',
-                'ValidUntil',
-                'MinQuantity',
-                'MinSubTotal',
+                $validFrom->getName(),
+                $validUntil->getName(),
+                $minQuantity->getName(),
+                $minSubTotal->getName(),
             ]);
-            $fields->insertAfter('Percentage', ToggleCompositeField::create('Restrictions', 'Restrictions', [
-                $validFrom,
-                $validUntil,
-                $minQuantity,
+
+            $fields->insertAfter('Main', Tab::create('Restrictions',
                 $minSubTotal,
-            ]));
+                $minQuantity,
+                FieldGroup::create('Time Period', [
+                    $validFrom,
+                    $validUntil,
+                ])->setDescription($validFrom->getDescription())
+            ));
         });
 
         return parent::getCMSFields();
