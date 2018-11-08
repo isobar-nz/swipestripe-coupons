@@ -93,21 +93,6 @@ class OrderItemCoupon extends DataObject
     {
         $result = ValidationResult::create();
 
-        $anyItemsMeetRequirements = false;
-        foreach ($this->getApplicableOrderItems($order) as $item) {
-            if ($this->isActiveForItem($item)) {
-                $anyItemsMeetRequirements = true;
-                break;
-            }
-        }
-
-        if (!$anyItemsMeetRequirements) {
-            $result->addFieldError($fieldName, _t(self::class . '.NO_MATCHED_ITEMS', 'Sorry, the coupon ' .
-                '"{title}" is not valid for any items in your cart.', [
-                'title' => $this->Title,
-            ]));
-        }
-
         /** @var DBDatetime $validFrom */
         $validFrom = $this->obj('ValidFrom');
         /** @var DBDatetime $validUntil */
@@ -128,6 +113,24 @@ class OrderItemCoupon extends DataObject
                     'title'       => $this->Title,
                     'valid_until' => $validUntil->Nice(),
                 ]));
+        }
+
+        if ($result->isValid()) {
+            // Only run this query/check if necessary
+            $anyItemsMeetRequirements = false;
+            foreach ($this->getApplicableOrderItems($order) as $item) {
+                if ($this->isActiveForItem($item)) {
+                    $anyItemsMeetRequirements = true;
+                    break;
+                }
+            }
+
+            if (!$anyItemsMeetRequirements) {
+                $result->addFieldError($fieldName, _t(self::class . '.NO_MATCHED_ITEMS', 'Sorry, the coupon ' .
+                    '"{title}" is not valid for any items in your cart.', [
+                    'title' => $this->Title,
+                ]));
+            }
         }
 
         $this->extend('isValidFor', $order, $fieldName, $result);
