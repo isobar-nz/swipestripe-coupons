@@ -10,6 +10,7 @@ use SwipeStripe\Price\DBPrice;
 /**
  * Class OrderCouponAddOn
  * @package SwipeStripe\Coupons\Order
+ * @property bool $UseRecorded
  * @property int $CouponID
  * @method OrderCoupon Coupon()
  */
@@ -19,6 +20,13 @@ class OrderCouponAddOn extends OrderAddOn
      * @var string
      */
     private static $table_name = 'SwipeStripe_Coupons_OrderAddOn';
+
+    /**
+     * @var array
+     */
+    private static $db = [
+        'UseRecorded' => 'Boolean',
+    ];
 
     /**
      * @var array
@@ -58,6 +66,7 @@ class OrderCouponAddOn extends OrderAddOn
      */
     public function isActive(): bool
     {
-        return parent::isActive() && $this->Coupon()->isValidFor($this->Order());
+        return parent::isActive() && $this->Coupon()->isValidFor($this->Order()) && $this->Amount->hasAmount()
+            && (!$this->Coupon()->LimitUses || $this->Coupon()->RemainingUses > 0);
     }
 }

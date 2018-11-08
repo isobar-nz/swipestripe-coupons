@@ -29,3 +29,24 @@ SwipeStripe\Coupons\Order\OrderCoupon:
     Title: Valid to/from
     Code: valid-to-from
     Percentage: 0.01
+
+  limited-uses:
+    Title: Limited uses
+    Code: limited-uses
+    Percentage: 0.01
+    LimitUses: true
+    RemainingUses: 10
+
+  no-remaining-uses-no-limit-uses:
+    Title: No remaining but not limited
+    Code: no-remaining-uses-no-limit-uses
+    Percentage: 0.01
+    LimitUses: false
+    RemainingUses: 0
+
+  no-remaining-uses:
+    Title: No remaining uses
+    Code: no-remaining-uses
+    Percentage: 0.01
+    LimitUses: true
+    RemainingUses: 0

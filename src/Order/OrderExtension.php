@@ -5,6 +5,7 @@ namespace SwipeStripe\Coupons\Order;
 
 use SilverStripe\ORM\DataExtension;
 use SilverStripe\ORM\DataList;
+use SilverStripe\ORM\DB;
 use SwipeStripe\Coupons\Order\OrderItem\OrderItemCouponAddOn;
 use SwipeStripe\Order\Order;
 use SwipeStripe\Order\OrderLockedException;
@@ -89,5 +90,35 @@ class OrderExtension extends DataExtension
         }
 
         return $count;
+    }
+
+    /**
+     * @throws \Exception
+     */
+    public function paymentCaptured(): void
+    {
+        $this->owner->recordOrderCouponUses();
+    }
+
+    /**
+     * @throws \Exception
+     */
+    protected function recordOrderCouponUses(): void
+    {
+        DB::get_conn()->withTransaction(function () {
+            foreach ($this->owner->OrderCouponAddOns() as $couponAddOn) {
+                if ($couponAddOn->isActive() && !$couponAddOn->UseRecorded) {
+                    $couponAddOn->UseRecorded = true;
+                    $couponAddOn->write();
+
+                    // Get by ID to prevent setting versioned parameters - we want the latest version
+                    $coupon = OrderCoupon::get_by_id($couponAddOn->CouponID);
+                    if ($coupon->LimitUses) {
+                        $coupon->RemainingUses = max(0, $coupon->RemainingUses - 1);
+                        $coupon->write();
+                    }
+                }
+            }
+        });
     }
 }

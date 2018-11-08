@@ -28,6 +28,8 @@ use UncleCheese\DisplayLogic\Extensions\DisplayLogic;
  * @property DBPrice $MaxValue
  * @property string $ValidFrom
  * @property string $ValidUntil
+ * @property bool $LimitUses
+ * @property int $RemainingUses
  * @mixin Versioned
  */
 class OrderCoupon extends DataObject
@@ -43,14 +45,16 @@ class OrderCoupon extends DataObject
      * @var array
      */
     private static $db = [
-        'Title'       => 'Varchar',
-        'Code'        => 'Varchar',
-        'MinSubTotal' => 'Price',
-        'Amount'      => 'Price',
-        'Percentage'  => 'Percentage(6)',
-        'MaxValue'    => 'Price',
-        'ValidFrom'   => 'Datetime',
-        'ValidUntil'  => 'Datetime',
+        'Title'         => 'Varchar',
+        'Code'          => 'Varchar',
+        'MinSubTotal'   => 'Price',
+        'Amount'        => 'Price',
+        'Percentage'    => 'Percentage(6)',
+        'MaxValue'      => 'Price',
+        'ValidFrom'     => 'Datetime',
+        'ValidUntil'    => 'Datetime',
+        'LimitUses'     => 'Boolean',
+        'RemainingUses' => 'Int',
     ];
 
     /**
@@ -110,6 +114,13 @@ class OrderCoupon extends DataObject
                 ]));
         }
 
+        if ($this->LimitUses && intval($this->RemainingUses) <= 0) {
+            $result->addFieldError($fieldName, _t(self::class . '.NO_REMAINING_USES',
+                'Sorry, the coupon "{title}" has run out of uses.', [
+                    'title' => $this->Title,
+                ]));
+        }
+
         $this->extend('isValidFor', $order, $fieldName, $result);
         return $result;
     }
@@ -141,10 +152,17 @@ class OrderCoupon extends DataObject
                     'for this coupon to be applied.');
             $validFrom = $fields->dataFieldByName('ValidFrom');
             $validUntil = $fields->dataFieldByName('ValidUntil');
+            $limitUses = $fields->dataFieldByName('LimitUses');
+            /** @var NumericField|DisplayLogic $remainingUses */
+            $remainingUses = $fields->dataFieldByName('RemainingUses');
+            $remainingUses->hideUnless($limitUses->getName())->isChecked();
+
             $fields->removeByName([
                 $minSubTotal->getName(),
                 $validFrom->getName(),
                 $validUntil->getName(),
+                $limitUses->getName(),
+                $remainingUses->getName(),
             ]);
 
             $fields->insertAfter('Main', Tab::create('Restrictions',
@@ -152,7 +170,11 @@ class OrderCoupon extends DataObject
                 FieldGroup::create('Time Period', [
                     $validFrom,
                     $validUntil,
-                ])->setDescription($validFrom->getDescription())
+                ])->setDescription($validFrom->getDescription()),
+                FieldGroup::create([
+                    $limitUses,
+                    $remainingUses,
+                ])
             ));
         });
 
