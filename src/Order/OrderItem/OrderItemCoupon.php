@@ -8,6 +8,7 @@ use SilverStripe\Forms\FieldList;
 use SilverStripe\Forms\GridField\GridField;
 use SilverStripe\Forms\GridField\GridFieldConfig_RecordViewer;
 use SilverStripe\Forms\GridField\GridFieldViewButton;
+use SilverStripe\Forms\NumericField;
 use SilverStripe\Forms\Tab;
 use SilverStripe\ORM\DataObject;
 use SilverStripe\ORM\DataQuery;
@@ -22,6 +23,7 @@ use SwipeStripe\Order\Order;
 use SwipeStripe\Order\OrderItem\OrderItem;
 use SwipeStripe\Order\PurchasableInterface;
 use SwipeStripe\Price\DBPrice;
+use SwipeStripe\Price\PriceField;
 
 /**
  * Class OrderItemCoupon
@@ -194,18 +196,20 @@ class OrderItemCoupon extends DataObject
                     ->removeComponentsByType(GridFieldViewButton::class));
             }
 
-            $fields->dataFieldByName('Amount')
+            /** @var PriceField $amount */
+            $amount = $fields->dataFieldByName('Amount')
                 ->setDescription('Please only enter one of amount or percentage.');
-
-            $fields->dataFieldByName('Percentage')
+            /** @var NumericField $percentage */
+            $percentage = $fields->dataFieldByName('Percentage')
                 ->setDescription('Enter a decimal value between 0 and 1 - e.g. 0.25 for 25% off. Please ' .
                     'only enter one of amount or percentage.');
-
-            $fields->dataFieldByName('MaxValue')
+            /** @var PriceField $maxValue */
+            $maxValue = $fields->dataFieldByName('MaxValue')
                 ->setTitle('Maximum Coupon Value')
                 ->setDescription('The maximum value of this coupon - only valid for percent off coupons. ' .
                     'E.g. 20% off, maximum discount of $10. Note that the maximum value is applied per item, not ' .
                     'over the whole order. E.g. Up to $10 off shirts AND up to $10 off pants.');
+            $this->setUpAmountPercentageHideBehaviour($amount, $percentage, $maxValue);
 
             $validFrom = $fields->dataFieldByName('ValidFrom');
             $validUntil = $fields->dataFieldByName('ValidUntil');
@@ -213,7 +217,6 @@ class OrderItemCoupon extends DataObject
                 ->setDescription('Minimum quantity of applicable item(s) for this coupon to  ' .
                     'apply. Quantity is tested against a single item - e.g. 2 shirts and 2 pants will not satisfy a ' .
                     'minimum quantity of 3.');
-
             $minSubTotal = $fields->dataFieldByName('MinSubTotal')
                 ->setTitle('Minimum Sub-Total')
                 ->setDescription('Minimum item sub-total for this coupon to be applied (e.g. $10 of items).');

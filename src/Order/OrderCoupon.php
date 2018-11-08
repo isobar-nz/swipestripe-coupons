@@ -5,6 +5,7 @@ namespace SwipeStripe\Coupons\Order;
 
 use SilverStripe\Forms\FieldGroup;
 use SilverStripe\Forms\FieldList;
+use SilverStripe\Forms\NumericField;
 use SilverStripe\Forms\Tab;
 use SilverStripe\ORM\DataObject;
 use SilverStripe\ORM\FieldType\DBDatetime;
@@ -14,6 +15,8 @@ use SwipeStripe\Coupons\CouponBehaviour;
 use SwipeStripe\Coupons\Order\OrderItem\OrderItemCoupon;
 use SwipeStripe\Order\Order;
 use SwipeStripe\Price\DBPrice;
+use SwipeStripe\Price\PriceField;
+use UncleCheese\DisplayLogic\Extensions\DisplayLogic;
 
 /**
  * Class OrderCoupon
@@ -118,23 +121,24 @@ class OrderCoupon extends DataObject
     public function getCMSFields()
     {
         $this->beforeUpdateCMSFields(function (FieldList $fields) {
-            $fields->dataFieldByName('Amount')
+            /** @var PriceField $amount */
+            $amount = $fields->dataFieldByName('Amount')
                 ->setDescription('Please only enter one of amount or percentage.');
-
-            $fields->dataFieldByName('Percentage')
+            /** @var NumericField $percentage */
+            $percentage = $fields->dataFieldByName('Percentage')
                 ->setDescription('Enter a decimal value between 0 and 1 - e.g. 0.25 for 25% off. Please ' .
                     'only enter one of amount or percentage.');
+            /** @var PriceField $maxValue */
+            $maxValue = $fields->dataFieldByName('MaxValue')
+                ->setTitle('Maximum Coupon Value')
+                ->setDescription('The maximum value of this coupon - only valid for percent off coupons. ' .
+                    'E.g. 20% off, maximum discount of $50.');
+            $this->setUpAmountPercentageHideBehaviour($amount, $percentage, $maxValue);
 
             $minSubTotal = $fields->dataFieldByName('MinSubTotal')
                 ->setTitle('Minimum Sub-Total')
                 ->setDescription('Minimum order sub-total (total of items and any item add-ons/coupons) ' .
                     'for this coupon to be applied.');
-
-            $fields->dataFieldByName('MaxValue')
-                ->setTitle('Maximum Coupon Value')
-                ->setDescription('The maximum value of this coupon - only valid for percent off coupons. ' .
-                    'E.g. 20% off, maximum discount of $50.');
-
             $validFrom = $fields->dataFieldByName('ValidFrom');
             $validUntil = $fields->dataFieldByName('ValidUntil');
             $fields->removeByName([

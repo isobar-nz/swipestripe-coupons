@@ -12,7 +12,8 @@
     "prefer-stable": true,
     "require": {
         "php": ">=7.1",
-        "swipestripe/swipestripe": "5.0.x-dev"
+        "swipestripe/swipestripe": "5.0.x-dev",
+        "unclecheese/display-logic": "^2.0"
     },
     "repositories": [
         {
