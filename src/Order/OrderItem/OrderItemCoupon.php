@@ -24,6 +24,7 @@ use SwipeStripe\Order\OrderItem\OrderItem;
 use SwipeStripe\Order\PurchasableInterface;
 use SwipeStripe\Price\DBPrice;
 use SwipeStripe\Price\PriceField;
+use UncleCheese\DisplayLogic\Extensions\DisplayLogic;
 
 /**
  * Class OrderItemCoupon
@@ -36,6 +37,8 @@ use SwipeStripe\Price\PriceField;
  * @property string $ValidUntil
  * @property int $MinQuantity
  * @property DBPrice $MinSubTotal
+ * @property bool $LimitUses
+ * @property int $RemainingUses
  * @method HasManyList|OrderItemCouponAddOn[] OrderItemCouponAddOns()
  * @method HasManyList|OrderItemCouponPurchasable[] Purchasables()
  * @mixin Versioned
@@ -53,15 +56,17 @@ class OrderItemCoupon extends DataObject
      * @var array
      */
     private static $db = [
-        'Title'       => 'Varchar',
-        'Code'        => 'Varchar',
-        'Amount'      => 'Price',
-        'Percentage'  => 'Percentage(6)',
-        'MaxValue'    => 'Price',
-        'ValidFrom'   => 'Datetime',
-        'ValidUntil'  => 'Datetime',
-        'MinQuantity' => 'Int',
-        'MinSubTotal' => 'Price',
+        'Title'         => 'Varchar',
+        'Code'          => 'Varchar',
+        'Amount'        => 'Price',
+        'Percentage'    => 'Percentage(6)',
+        'MaxValue'      => 'Price',
+        'ValidFrom'     => 'Datetime',
+        'ValidUntil'    => 'Datetime',
+        'MinQuantity'   => 'Int',
+        'MinSubTotal'   => 'Price',
+        'LimitUses'     => 'Boolean',
+        'RemainingUses' => 'Int',
     ];
 
     /**
@@ -117,6 +122,13 @@ class OrderItemCoupon extends DataObject
                 'Sorry, the coupon "{title}" expired at {valid_until}.', [
                     'title'       => $this->Title,
                     'valid_until' => $validUntil->Nice(),
+                ]));
+        }
+
+        if ($this->LimitUses && intval($this->RemainingUses) <= 0) {
+            $result->addFieldError($fieldName, _t(self::class . '.NO_REMAINING_USES',
+                'Sorry, the coupon "{title}" has run out of uses.', [
+                    'title' => $this->Title,
                 ]));
         }
 
@@ -222,12 +234,18 @@ class OrderItemCoupon extends DataObject
             $minSubTotal = $fields->dataFieldByName('MinSubTotal')
                 ->setTitle('Minimum Sub-Total')
                 ->setDescription('Minimum item sub-total for this coupon to be applied (e.g. $10 of items).');
+            $limitUses = $fields->dataFieldByName('LimitUses');
+            /** @var NumericField|DisplayLogic $remainingUses */
+            $remainingUses = $fields->dataFieldByName('RemainingUses');
+            $remainingUses->hideUnless($limitUses->getName())->isChecked();
 
             $fields->removeByName([
                 $validFrom->getName(),
                 $validUntil->getName(),
                 $minQuantity->getName(),
                 $minSubTotal->getName(),
+                $limitUses->getName(),
+                $remainingUses->getName(),
             ]);
 
             $fields->insertAfter('Main', Tab::create('Restrictions',
@@ -236,7 +254,11 @@ class OrderItemCoupon extends DataObject
                 FieldGroup::create('Time Period', [
                     $validFrom,
                     $validUntil,
-                ])->setDescription($validFrom->getDescription())
+                ])->setDescription($validFrom->getDescription()),
+                FieldGroup::create([
+                    $limitUses,
+                    $remainingUses,
+                ])
             ));
         });
 

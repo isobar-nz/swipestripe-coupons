@@ -464,6 +464,34 @@ class OrderItemCouponTest extends SapphireTest
     /**
      *
      */
+    public function testValidForNoLimitUsesNoRemainingUses()
+    {
+        $order = Order::singleton()->createCart();
+        $order->addItem($this->product);
+
+        /** @var OrderItemCoupon $coupon */
+        $coupon = $this->objFromFixture(OrderItemCoupon::class, 'no-remaining-uses-no-limit-uses');
+
+        $this->assertTrue($coupon->isValidFor($order)->isValid());
+    }
+
+    /**
+     *
+     */
+    public function testValidForNoRemainingUses()
+    {
+        $order = Order::singleton()->createCart();
+        $order->addItem($this->product);
+
+        /** @var OrderItemCoupon $coupon */
+        $coupon = $this->objFromFixture(OrderItemCoupon::class, 'no-remaining-uses');
+
+        $this->assertFalse($coupon->isValidFor($order)->isValid());
+    }
+
+    /**
+     *
+     */
     public function testIsActiveForMinQuantity()
     {
         $order = Order::singleton()->createCart();

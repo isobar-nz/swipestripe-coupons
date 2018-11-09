@@ -163,7 +163,7 @@ class OrderExtensionTest extends SapphireTest
     /**
      * @throws \Exception
      */
-    public function testPaymentCapturedReducesLimitedUses()
+    public function testPaymentCapturedReducesOrderCouponLimitedUses()
     {
         /** @var Order|OrderExtension $order */
         $order = Order::singleton()->createCart();
@@ -189,6 +189,50 @@ class OrderExtensionTest extends SapphireTest
         // Ensure double-capture won't double-decrement uses
         $order->paymentCaptured($payment);
         $coupon = OrderCoupon::get()->byID($coupon->ID);
+        $this->assertSame(9, $coupon->RemainingUses);
+    }
+
+    /**
+     * @throws \Exception
+     */
+    public function testPaymentCapturedReducesOrderItemCouponLimitedUses()
+    {
+        /** @var Order|OrderExtension $order */
+        $order = Order::singleton()->createCart();
+        $order->CustomerEmail = 'test@example.org';
+
+        /** @var TestProduct $product */
+        $product = $this->objFromFixture(TestProduct::class, 'product');
+        /** @var TestProduct $otherProduct */
+        $otherProduct = $this->objFromFixture(TestProduct::class, 'other-product');
+        $order->addItem($product);
+        $order->addItem($otherProduct);
+
+        /** @var OrderItemCoupon $coupon */
+        $coupon = $this->objFromFixture(OrderItemCoupon::class, 'limited-uses');
+        /** @var OrderItem|OrderItemExtension $orderItem */
+        foreach ($coupon->getApplicableOrderItems($order) as $orderItem) {
+            $orderItem->applyCoupon($coupon);
+        }
+        $order->Lock();
+
+        $this->assertSame(10, $coupon->RemainingUses);
+        foreach ($order->OrderItemCouponAddOns() as $addOn) {
+            $this->assertFalse(boolval($addOn->UseRecorded));
+        }
+
+        $payment = $this->addPaymentWithStatus($order, $order->Total()->getMoney(), PaymentStatus::CAPTURED);
+        $order->paymentCaptured($payment);
+
+        $coupon = OrderItemCoupon::get()->byID($coupon->ID);
+        $this->assertSame(9, $coupon->RemainingUses);
+        foreach ($order->OrderItemCouponAddOns() as $addOn) {
+            $this->assertTrue(boolval($addOn->UseRecorded));
+        }
+
+        // Ensure double-capture won't double-decrement uses
+        $order->paymentCaptured($payment);
+        $coupon = OrderItemCoupon::get()->byID($coupon->ID);
         $this->assertSame(9, $coupon->RemainingUses);
     }
 

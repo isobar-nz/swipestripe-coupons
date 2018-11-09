@@ -42,6 +42,7 @@ en:
     MINQUANTITY_NEGATIVE: 'Minimum quantity should not be negative.'
     MIN_SUBTOTAL_NEGATIVE: 'Minimum sub-total should not be negative.'
     NO_MATCHED_ITEMS: 'Sorry, the coupon "{title}" is not valid for any items in your cart.'
+    NO_REMAINING_USES: 'Sorry, the coupon "{title}" has run out of uses.'
     PERCENTAGE_NEGATIVE: 'Percentage should not be negative.'
     PLURALNAME: 'Order Item Coupons'
     PLURALS:
