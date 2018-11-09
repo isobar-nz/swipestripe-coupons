@@ -36,6 +36,7 @@ use SwipeStripe\Price\PriceField;
  * @property string $ValidUntil
  * @property int $MinQuantity
  * @property DBPrice $MinSubTotal
+ * @method HasManyList|OrderItemCouponAddOn[] OrderItemCouponAddOns()
  * @method HasManyList|OrderItemCouponPurchasable[] Purchasables()
  * @mixin Versioned
  */
@@ -67,7 +68,8 @@ class OrderItemCoupon extends DataObject
      * @var array
      */
     private static $has_many = [
-        'Purchasables' => OrderItemCouponPurchasable::class,
+        'Purchasables'          => OrderItemCouponPurchasable::class,
+        'OrderItemCouponAddOns' => OrderItemCouponAddOn::class,
     ];
 
     /**

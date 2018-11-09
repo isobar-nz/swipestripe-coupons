@@ -3,7 +3,7 @@ en:
     APPLY_COUPON: 'Apply Coupon'
     COUPON_CODE: 'Coupon Code'
     REMOVE_APPLIED_COUPONS: 'Remove Applied Coupon(s)'
-  SwipeStripe\Coupons\Checkout\CheckoutFormValidatorExtension:
+  SwipeStripe\Coupons\Checkout\CheckoutFormRequestHandlerExtension:
     COUPON_INVALID: 'Sorry, that coupon code is invalid.'
   SwipeStripe\Coupons\CouponAdmin:
     MENUTITLE: Coupons

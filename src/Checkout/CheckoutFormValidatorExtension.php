@@ -4,9 +4,10 @@ declare(strict_types=1);
 namespace SwipeStripe\Coupons\Checkout;
 
 use SilverStripe\Core\Extension;
-use SwipeStripe\Coupons\Order\OrderCoupon;
+use SilverStripe\ORM\DataList;
 use SwipeStripe\Coupons\Order\OrderExtension;
 use SwipeStripe\Coupons\Order\OrderItem\OrderItemCoupon;
+use SwipeStripe\Coupons\Order\OrderItem\OrderItemCouponAddOn;
 use SwipeStripe\Order\Checkout\CheckoutFormInterface;
 use SwipeStripe\Order\Checkout\CheckoutFormValidator;
 use SwipeStripe\Order\Order;
@@ -24,33 +25,16 @@ class CheckoutFormValidatorExtension extends Extension
      */
     public function validate(CheckoutFormInterface $form, array $data): void
     {
-        $this->owner->validateAppliedCoupons($form->getCart());
-
-        $code = $data[CheckoutFormExtension::COUPON_CODE_FIELD];
-        if (empty($code)) {
-            return;
-        }
-
-        $coupon = OrderCoupon::getByCode($code) ?? OrderItemCoupon::getByCode($code);
-        if ($coupon === null) {
-            $this->owner->validationError(CheckoutFormExtension::COUPON_CODE_FIELD,
-                _t(self::class . '.COUPON_INVALID', 'Sorry, that coupon code is invalid.'));
-        } else {
-            $this->owner->getResult()->combineAnd(
-                $coupon->isValidFor($form->getCart(), CheckoutFormExtension::COUPON_CODE_FIELD)
-            );
-        }
-    }
-
-    /**
-     * @param Order|OrderExtension $cart
-     */
-    public function validateAppliedCoupons(Order $cart): void
-    {
-        $result = $this->owner->getResult();
-
+        /** @var Order|OrderExtension $cart */
+        $cart = $form->getCart();
         foreach ($cart->OrderCouponAddOns() as $addOn) {
-            $result->combineAnd($addOn->Coupon()->isValidFor($cart));
+            $this->owner->getResult()->combineAnd($addOn->Coupon()->isValidFor($cart));
+        }
+
+        /** @var DataList|OrderItemCoupon[] $itemCoupons */
+        $itemCoupons = OrderItemCoupon::get()->filter('OrderItemCouponAddOns.OrderItem.OrderID', $cart->ID);
+        foreach ($itemCoupons as $coupon) {
+            $this->owner->getResult()->combineAnd($coupon->isValidFor($cart));
         }
     }
 }
