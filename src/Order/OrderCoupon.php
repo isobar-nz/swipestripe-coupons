@@ -9,6 +9,7 @@ use SilverStripe\Forms\NumericField;
 use SilverStripe\Forms\Tab;
 use SilverStripe\ORM\DataObject;
 use SilverStripe\ORM\FieldType\DBDatetime;
+use SilverStripe\ORM\ManyManyThroughList;
 use SilverStripe\ORM\ValidationResult;
 use SilverStripe\Versioned\Versioned;
 use SwipeStripe\Coupons\CouponBehaviour;
@@ -30,6 +31,7 @@ use UncleCheese\DisplayLogic\Extensions\DisplayLogic;
  * @property string $ValidUntil
  * @property bool $LimitUses
  * @property int $RemainingUses
+ * @method ManyManyThroughList|static[] OrderCouponStacks()
  * @mixin Versioned
  */
 class OrderCoupon extends DataObject
@@ -55,6 +57,17 @@ class OrderCoupon extends DataObject
         'ValidUntil'    => 'Datetime',
         'LimitUses'     => 'Boolean',
         'RemainingUses' => 'Int',
+    ];
+
+    /**
+     * @var array
+     */
+    private static $many_many = [
+        'OrderCouponStacks' => [
+            'through' => OrderCouponStackThrough::class,
+            'from'    => OrderCouponStackThrough::LEFT,
+            'to'      => OrderCouponStackThrough::RIGHT,
+        ],
     ];
 
     /**
