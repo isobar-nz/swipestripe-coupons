@@ -43,6 +43,14 @@ class OrderExtension extends DataExtension
     }
 
     /**
+     * @return DataList|OrderItemCoupon[]
+     */
+    public function OrderItemCoupons(): DataList
+    {
+        return OrderItemCoupon::get()->filter('OrderItemCouponAddOns.OrderItem.OrderID', $this->owner->ID);
+    }
+
+    /**
      * @param OrderCoupon $coupon
      */
     public function applyCoupon(OrderCoupon $coupon): void
