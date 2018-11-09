@@ -3,11 +3,13 @@ declare(strict_types=1);
 
 namespace SwipeStripe\Coupons\Order\OrderItem;
 
+use SilverStripe\Forms\FieldGroup;
 use SilverStripe\Forms\FieldList;
 use SilverStripe\Forms\GridField\GridField;
 use SilverStripe\Forms\GridField\GridFieldConfig_RecordViewer;
 use SilverStripe\Forms\GridField\GridFieldViewButton;
-use SilverStripe\Forms\ToggleCompositeField;
+use SilverStripe\Forms\NumericField;
+use SilverStripe\Forms\Tab;
 use SilverStripe\ORM\DataObject;
 use SilverStripe\ORM\DataQuery;
 use SilverStripe\ORM\FieldType\DBDatetime;
@@ -21,6 +23,8 @@ use SwipeStripe\Order\Order;
 use SwipeStripe\Order\OrderItem\OrderItem;
 use SwipeStripe\Order\PurchasableInterface;
 use SwipeStripe\Price\DBPrice;
+use SwipeStripe\Price\PriceField;
+use UncleCheese\DisplayLogic\Extensions\DisplayLogic;
 
 /**
  * Class OrderItemCoupon
@@ -33,6 +37,9 @@ use SwipeStripe\Price\DBPrice;
  * @property string $ValidUntil
  * @property int $MinQuantity
  * @property DBPrice $MinSubTotal
+ * @property bool $LimitUses
+ * @property int $RemainingUses
+ * @method HasManyList|OrderItemCouponAddOn[] OrderItemCouponAddOns()
  * @method HasManyList|OrderItemCouponPurchasable[] Purchasables()
  * @mixin Versioned
  */
@@ -49,22 +56,25 @@ class OrderItemCoupon extends DataObject
      * @var array
      */
     private static $db = [
-        'Title'       => 'Varchar',
-        'Code'        => 'Varchar',
-        'Amount'      => 'Price',
-        'Percentage'  => 'Percentage(6)',
-        'MaxValue'    => 'Price',
-        'ValidFrom'   => 'Datetime',
-        'ValidUntil'  => 'Datetime',
-        'MinQuantity' => 'Int',
-        'MinSubTotal' => 'Price',
+        'Title'         => 'Varchar',
+        'Code'          => 'Varchar',
+        'Amount'        => 'Price',
+        'Percentage'    => 'Percentage(6)',
+        'MaxValue'      => 'Price',
+        'ValidFrom'     => 'Datetime',
+        'ValidUntil'    => 'Datetime',
+        'MinQuantity'   => 'Int',
+        'MinSubTotal'   => 'Price',
+        'LimitUses'     => 'Boolean',
+        'RemainingUses' => 'Int',
     ];
 
     /**
      * @var array
      */
     private static $has_many = [
-        'Purchasables' => OrderItemCouponPurchasable::class,
+        'Purchasables'          => OrderItemCouponPurchasable::class,
+        'OrderItemCouponAddOns' => OrderItemCouponAddOn::class,
     ];
 
     /**
@@ -93,21 +103,6 @@ class OrderItemCoupon extends DataObject
     {
         $result = ValidationResult::create();
 
-        $anyItemsMeetRequirements = false;
-        foreach ($this->getApplicableOrderItems($order) as $item) {
-            if ($this->isActiveForItem($item)) {
-                $anyItemsMeetRequirements = true;
-                break;
-            }
-        }
-
-        if (!$anyItemsMeetRequirements) {
-            $result->addFieldError($fieldName, _t(self::class . '.NO_MATCHED_ITEMS', 'Sorry, the coupon ' .
-                '"{title}" is not valid for any items in your cart.', [
-                'title' => $this->Title,
-            ]));
-        }
-
         /** @var DBDatetime $validFrom */
         $validFrom = $this->obj('ValidFrom');
         /** @var DBDatetime $validUntil */
@@ -128,6 +123,31 @@ class OrderItemCoupon extends DataObject
                     'title'       => $this->Title,
                     'valid_until' => $validUntil->Nice(),
                 ]));
+        }
+
+        if ($this->LimitUses && intval($this->RemainingUses) <= 0) {
+            $result->addFieldError($fieldName, _t(self::class . '.NO_REMAINING_USES',
+                'Sorry, the coupon "{title}" has run out of uses.', [
+                    'title' => $this->Title,
+                ]));
+        }
+
+        if ($result->isValid()) {
+            // Only run this query/check if necessary
+            $anyItemsMeetRequirements = false;
+            foreach ($this->getApplicableOrderItems($order) as $item) {
+                if ($this->isActiveForItem($item)) {
+                    $anyItemsMeetRequirements = true;
+                    break;
+                }
+            }
+
+            if (!$anyItemsMeetRequirements) {
+                $result->addFieldError($fieldName, _t(self::class . '.NO_MATCHED_ITEMS', 'Sorry, the coupon ' .
+                    '"{title}" is not valid for any items in your cart.', [
+                    'title' => $this->Title,
+                ]));
+            }
         }
 
         $this->extend('isValidFor', $order, $fieldName, $result);
@@ -190,42 +210,56 @@ class OrderItemCoupon extends DataObject
                     ->removeComponentsByType(GridFieldViewButton::class));
             }
 
-            $fields->dataFieldByName('Amount')
+            /** @var PriceField $amount */
+            $amount = $fields->dataFieldByName('Amount')
                 ->setDescription('Please only enter one of amount or percentage.');
-
-            $fields->dataFieldByName('Percentage')
+            /** @var NumericField $percentage */
+            $percentage = $fields->dataFieldByName('Percentage')
                 ->setDescription('Enter a decimal value between 0 and 1 - e.g. 0.25 for 25% off. Please ' .
                     'only enter one of amount or percentage.');
-
-            $fields->dataFieldByName('MaxValue')
+            /** @var PriceField $maxValue */
+            $maxValue = $fields->dataFieldByName('MaxValue')
                 ->setTitle('Maximum Coupon Value')
                 ->setDescription('The maximum value of this coupon - only valid for percent off coupons. ' .
                     'E.g. 20% off, maximum discount of $10. Note that the maximum value is applied per item, not ' .
                     'over the whole order. E.g. Up to $10 off shirts AND up to $10 off pants.');
+            $this->setUpAmountPercentageHideBehaviour($amount, $percentage, $maxValue);
 
             $validFrom = $fields->dataFieldByName('ValidFrom');
             $validUntil = $fields->dataFieldByName('ValidUntil');
-            $minQuantity = $fields->dataFieldByName('MinQuantity');
-            $minQuantity->setDescription('Minimum quantity of applicable item(s) for this coupon to  ' .
-                'apply. Quantity is tested against a single item - e.g. 2 shirts and 2 pants will not satisfy a ' .
-                'minimum quantity of 3.');
-
+            $minQuantity = $fields->dataFieldByName('MinQuantity')
+                ->setDescription('Minimum quantity of applicable item(s) for this coupon to  ' .
+                    'apply. Quantity is tested against a single item - e.g. 2 shirts and 2 pants will not satisfy a ' .
+                    'minimum quantity of 3.');
             $minSubTotal = $fields->dataFieldByName('MinSubTotal')
                 ->setTitle('Minimum Sub-Total')
                 ->setDescription('Minimum item sub-total for this coupon to be applied (e.g. $10 of items).');
+            $limitUses = $fields->dataFieldByName('LimitUses');
+            /** @var NumericField|DisplayLogic $remainingUses */
+            $remainingUses = $fields->dataFieldByName('RemainingUses');
+            $remainingUses->hideUnless($limitUses->getName())->isChecked();
 
             $fields->removeByName([
-                'ValidFrom',
-                'ValidUntil',
-                'MinQuantity',
-                'MinSubTotal',
+                $validFrom->getName(),
+                $validUntil->getName(),
+                $minQuantity->getName(),
+                $minSubTotal->getName(),
+                $limitUses->getName(),
+                $remainingUses->getName(),
             ]);
-            $fields->insertAfter('Percentage', ToggleCompositeField::create('Restrictions', 'Restrictions', [
-                $validFrom,
-                $validUntil,
-                $minQuantity,
+
+            $fields->insertAfter('Main', Tab::create('Restrictions',
                 $minSubTotal,
-            ]));
+                $minQuantity,
+                FieldGroup::create('Time Period', [
+                    $validFrom,
+                    $validUntil,
+                ])->setDescription($validFrom->getDescription()),
+                FieldGroup::create([
+                    $limitUses,
+                    $remainingUses,
+                ])
+            ));
         });
 
         return parent::getCMSFields();

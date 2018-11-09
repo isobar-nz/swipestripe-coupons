@@ -3,8 +3,13 @@ declare(strict_types=1);
 
 namespace SwipeStripe\Coupons;
 
+use SilverStripe\Forms\FormField;
+use SilverStripe\Forms\NumericField;
 use SilverStripe\ORM\DataObject;
 use SilverStripe\Versioned\Versioned;
+use SwipeStripe\Price\PriceField;
+use UncleCheese\DisplayLogic\Extensions\DisplayLogic;
+use UncleCheese\DisplayLogic\Forms\Wrapper;
 
 /**
  * Trait CouponBehaviour
@@ -22,7 +27,7 @@ trait CouponBehaviour
      */
     private static $indexes = [
         'code-unique' => [
-            'type'    => 'unique',
+            'type' => 'unique',
             'columns' => [
                 'Code',
             ],
@@ -74,5 +79,46 @@ trait CouponBehaviour
         return $this->Amount->hasAmount()
             ? $this->Amount->getValue()
             : $this->Percentage * 100 . '%';
+    }
+
+    /**
+     * @param FormField $field
+     * @return Wrapper|DisplayLogic
+     */
+    protected function wrapDisplayLogic(FormField $field): Wrapper
+    {
+        $fieldList = $field->getContainerFieldList();
+        $wrapper = Wrapper::create($field);
+
+        if ($fieldList) {
+            $fieldList->replaceField($field->getName(), $wrapper);
+        }
+
+        return $wrapper;
+    }
+
+    /**
+     * @param PriceField $amount
+     * @param NumericField|DisplayLogic $percentage
+     * @param PriceField $maxValue
+     */
+    protected function setUpAmountPercentageHideBehaviour(
+        PriceField $amount,
+        NumericField $percentage,
+        PriceField $maxValue
+    ): void {
+        $amountAmountField = $amount->getAmountField();
+        $epsilon = 0.000000001; // No PHP_FLOAT_EPSILON in PHP7.1 - to emulate >=0 by doing < epsilon
+
+        // Show amount field if coupon has no value or amount value set
+        $this->wrapDisplayLogic($amount)->displayIf($percentage->getName())->isLessThan($epsilon)->isEmpty()
+            ->orIf($amountAmountField->getName())->isGreaterThan(0);
+
+        // Show percentage field if coupon has no value or percentage value set
+        $percentage->displayIf($amountAmountField->getName())->isLessThan($epsilon)->isEmpty()
+            ->orIf($percentage->getName())->isGreaterThan(0);
+
+        // Show max value field if percentage value set
+        $this->wrapDisplayLogic($maxValue)->displayIf($percentage->getName())->isGreaterThan(0);
     }
 }

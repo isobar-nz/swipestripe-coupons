@@ -3,8 +3,10 @@ declare(strict_types=1);
 
 namespace SwipeStripe\Coupons\Order;
 
+use SilverStripe\Forms\FieldGroup;
 use SilverStripe\Forms\FieldList;
-use SilverStripe\Forms\ToggleCompositeField;
+use SilverStripe\Forms\NumericField;
+use SilverStripe\Forms\Tab;
 use SilverStripe\ORM\DataObject;
 use SilverStripe\ORM\FieldType\DBDatetime;
 use SilverStripe\ORM\ValidationResult;
@@ -13,6 +15,8 @@ use SwipeStripe\Coupons\CouponBehaviour;
 use SwipeStripe\Coupons\Order\OrderItem\OrderItemCoupon;
 use SwipeStripe\Order\Order;
 use SwipeStripe\Price\DBPrice;
+use SwipeStripe\Price\PriceField;
+use UncleCheese\DisplayLogic\Extensions\DisplayLogic;
 
 /**
  * Class OrderCoupon
@@ -24,6 +28,8 @@ use SwipeStripe\Price\DBPrice;
  * @property DBPrice $MaxValue
  * @property string $ValidFrom
  * @property string $ValidUntil
+ * @property bool $LimitUses
+ * @property int $RemainingUses
  * @mixin Versioned
  */
 class OrderCoupon extends DataObject
@@ -39,14 +45,16 @@ class OrderCoupon extends DataObject
      * @var array
      */
     private static $db = [
-        'Title'       => 'Varchar',
-        'Code'        => 'Varchar',
-        'MinSubTotal' => 'Price',
-        'Amount'      => 'Price',
-        'Percentage'  => 'Percentage(6)',
-        'MaxValue'    => 'Price',
-        'ValidFrom'   => 'Datetime',
-        'ValidUntil'  => 'Datetime',
+        'Title'         => 'Varchar',
+        'Code'          => 'Varchar',
+        'MinSubTotal'   => 'Price',
+        'Amount'        => 'Price',
+        'Percentage'    => 'Percentage(6)',
+        'MaxValue'      => 'Price',
+        'ValidFrom'     => 'Datetime',
+        'ValidUntil'    => 'Datetime',
+        'LimitUses'     => 'Boolean',
+        'RemainingUses' => 'Int',
     ];
 
     /**
@@ -106,6 +114,13 @@ class OrderCoupon extends DataObject
                 ]));
         }
 
+        if ($this->LimitUses && intval($this->RemainingUses) <= 0) {
+            $result->addFieldError($fieldName, _t(self::class . '.NO_REMAINING_USES',
+                'Sorry, the coupon "{title}" has run out of uses.', [
+                    'title' => $this->Title,
+                ]));
+        }
+
         $this->extend('isValidFor', $order, $fieldName, $result);
         return $result;
     }
@@ -117,35 +132,50 @@ class OrderCoupon extends DataObject
     public function getCMSFields()
     {
         $this->beforeUpdateCMSFields(function (FieldList $fields) {
-            $fields->dataFieldByName('Amount')
+            /** @var PriceField $amount */
+            $amount = $fields->dataFieldByName('Amount')
                 ->setDescription('Please only enter one of amount or percentage.');
-
-            $fields->dataFieldByName('Percentage')
+            /** @var NumericField $percentage */
+            $percentage = $fields->dataFieldByName('Percentage')
                 ->setDescription('Enter a decimal value between 0 and 1 - e.g. 0.25 for 25% off. Please ' .
                     'only enter one of amount or percentage.');
+            /** @var PriceField $maxValue */
+            $maxValue = $fields->dataFieldByName('MaxValue')
+                ->setTitle('Maximum Coupon Value')
+                ->setDescription('The maximum value of this coupon - only valid for percent off coupons. ' .
+                    'E.g. 20% off, maximum discount of $50.');
+            $this->setUpAmountPercentageHideBehaviour($amount, $percentage, $maxValue);
 
             $minSubTotal = $fields->dataFieldByName('MinSubTotal')
                 ->setTitle('Minimum Sub-Total')
                 ->setDescription('Minimum order sub-total (total of items and any item add-ons/coupons) ' .
                     'for this coupon to be applied.');
-
-            $fields->dataFieldByName('MaxValue')
-                ->setTitle('Maximum Coupon Value')
-                ->setDescription('The maximum value of this coupon - only valid for percent off coupons. ' .
-                    'E.g. 20% off, maximum discount of $50.');
-
             $validFrom = $fields->dataFieldByName('ValidFrom');
             $validUntil = $fields->dataFieldByName('ValidUntil');
+            $limitUses = $fields->dataFieldByName('LimitUses');
+            /** @var NumericField|DisplayLogic $remainingUses */
+            $remainingUses = $fields->dataFieldByName('RemainingUses');
+            $remainingUses->hideUnless($limitUses->getName())->isChecked();
+
             $fields->removeByName([
-                'MinSubTotal',
-                'ValidFrom',
-                'ValidUntil',
+                $minSubTotal->getName(),
+                $validFrom->getName(),
+                $validUntil->getName(),
+                $limitUses->getName(),
+                $remainingUses->getName(),
             ]);
-            $fields->insertAfter('MaxValue', ToggleCompositeField::create('Restrictions', 'Restrictions', [
+
+            $fields->insertAfter('Main', Tab::create('Restrictions',
                 $minSubTotal,
-                $validFrom,
-                $validUntil,
-            ]));
+                FieldGroup::create('Time Period', [
+                    $validFrom,
+                    $validUntil,
+                ])->setDescription($validFrom->getDescription()),
+                FieldGroup::create([
+                    $limitUses,
+                    $remainingUses,
+                ])
+            ));
         });
 
         return parent::getCMSFields();

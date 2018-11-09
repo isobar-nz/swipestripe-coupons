@@ -3,7 +3,7 @@ en:
     APPLY_COUPON: 'Apply Coupon'
     COUPON_CODE: 'Coupon Code'
     REMOVE_APPLIED_COUPONS: 'Remove Applied Coupon(s)'
-  SwipeStripe\Coupons\Checkout\CheckoutFormValidatorExtension:
+  SwipeStripe\Coupons\Checkout\CheckoutFormRequestHandlerExtension:
     COUPON_INVALID: 'Sorry, that coupon code is invalid.'
   SwipeStripe\Coupons\CouponAdmin:
     MENUTITLE: Coupons
@@ -15,6 +15,7 @@ en:
     CODE_EMPTY: 'Code cannot be empty.'
     MAX_VALUE_NEGATIVE: 'Max value should not be negative.'
     MIN_SUBTOTAL_NEGATIVE: 'Minimum sub-total should not be negative.'
+    NO_REMAINING_USES: 'Sorry, the coupon "{title}" has run out of uses.'
     PERCENTAGE_NEGATIVE: 'Percentage should not be negative.'
     PLURALNAME: 'Order Coupons'
     PLURALS:
@@ -41,6 +42,7 @@ en:
     MINQUANTITY_NEGATIVE: 'Minimum quantity should not be negative.'
     MIN_SUBTOTAL_NEGATIVE: 'Minimum sub-total should not be negative.'
     NO_MATCHED_ITEMS: 'Sorry, the coupon "{title}" is not valid for any items in your cart.'
+    NO_REMAINING_USES: 'Sorry, the coupon "{title}" has run out of uses.'
     PERCENTAGE_NEGATIVE: 'Percentage should not be negative.'
     PLURALNAME: 'Order Item Coupons'
     PLURALS:

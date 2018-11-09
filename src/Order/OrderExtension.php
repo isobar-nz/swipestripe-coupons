@@ -5,6 +5,8 @@ namespace SwipeStripe\Coupons\Order;
 
 use SilverStripe\ORM\DataExtension;
 use SilverStripe\ORM\DataList;
+use SilverStripe\ORM\DB;
+use SwipeStripe\Coupons\Order\OrderItem\OrderItemCoupon;
 use SwipeStripe\Coupons\Order\OrderItem\OrderItemCouponAddOn;
 use SwipeStripe\Order\Order;
 use SwipeStripe\Order\OrderLockedException;
@@ -89,5 +91,64 @@ class OrderExtension extends DataExtension
         }
 
         return $count;
+    }
+
+    /**
+     * @throws \Exception
+     */
+    public function paymentCaptured(): void
+    {
+        $this->owner->recordOrderCouponUses();
+        $this->owner->recordOrderItemCouponUses();
+    }
+
+    /**
+     * @throws \Exception
+     */
+    public function recordOrderCouponUses(): void
+    {
+        DB::get_conn()->withTransaction(function () {
+            foreach ($this->owner->OrderCouponAddOns() as $couponAddOn) {
+                if (!$couponAddOn->UseRecorded && $couponAddOn->isActive()) {
+                    $couponAddOn->UseRecorded = true;
+                    $couponAddOn->write();
+
+                    // Get by ID to prevent setting versioned parameters - we want the latest version
+                    $coupon = OrderCoupon::get_by_id($couponAddOn->CouponID);
+                    if ($coupon->LimitUses) {
+                        $coupon->RemainingUses = max(0, $coupon->RemainingUses - 1);
+                        $coupon->write();
+                    }
+                }
+            }
+        });
+    }
+
+    /**
+     * @throws \Exception
+     */
+    public function recordOrderItemCouponUses()
+    {
+        DB::get_conn()->withTransaction(function () {
+            $couponIdsToRecordUse = [];
+
+            foreach ($this->owner->OrderItemCouponAddOns() as $couponAddOn) {
+                if (!$couponAddOn->UseRecorded && $couponAddOn->isActive()) {
+                    $couponId = $couponAddOn->CouponID;
+                    $couponIdsToRecordUse[$couponId] = $couponId;
+
+                    $couponAddOn->UseRecorded = true;
+                    $couponAddOn->write();
+                }
+            }
+
+            foreach ($couponIdsToRecordUse as $id) {
+                $coupon = OrderItemCoupon::get_by_id($id);
+                if ($coupon->LimitUses) {
+                    $coupon->RemainingUses = max(0, $coupon->RemainingUses - 1);
+                    $coupon->write();
+                }
+            }
+        });
     }
 }

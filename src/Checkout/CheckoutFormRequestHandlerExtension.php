@@ -5,6 +5,8 @@ namespace SwipeStripe\Coupons\Checkout;
 
 use SilverStripe\Control\HTTPResponse;
 use SilverStripe\Core\Extension;
+use SilverStripe\ORM\ValidationException;
+use SilverStripe\ORM\ValidationResult;
 use SwipeStripe\Coupons\Order\OrderCoupon;
 use SwipeStripe\Coupons\Order\OrderExtension;
 use SwipeStripe\Coupons\Order\OrderItem\OrderItemCoupon;
@@ -29,42 +31,33 @@ class CheckoutFormRequestHandlerExtension extends Extension
     public function ApplyCoupon(array $data, CheckoutFormInterface $form): HTTPResponse
     {
         $code = $data[CheckoutFormExtension::COUPON_CODE_FIELD];
-        if (empty($code)) {
-            return $this->owner->redirectBack();
+        $coupon = !empty($code)
+            ? OrderCoupon::getByCode($code) ?? OrderItemCoupon::getByCode($code)
+            : null;
+
+        if ($coupon === null) {
+            throw ValidationException::create(ValidationResult::create()
+                ->addFieldError(CheckoutFormExtension::COUPON_CODE_FIELD,
+                    _t(self::class . '.COUPON_INVALID', 'Sorry, that coupon code is invalid.')));
         }
 
-        $orderCoupon = OrderCoupon::getByCode($code);
-        if ($orderCoupon !== null) {
-            $order = $this->getMutableCart($form);
-            $order->clearAppliedOrderCoupons();
-            $order->clearAppliedOrderItemCoupons();
-            $order->applyCoupon($orderCoupon);
-        } else {
-            $orderItemCoupon = OrderItemCoupon::getByCode($code);
-            if ($orderItemCoupon !== null) {
-                $order = $this->getMutableCart($form);
-                $order->clearAppliedOrderCoupons();
-                $order->clearAppliedOrderItemCoupons();
-                /** @var OrderItem|OrderItemExtension $orderItem */
-                foreach ($orderItemCoupon->getApplicableOrderItems($order) as $orderItem) {
-                    $orderItem->applyCoupon($orderItemCoupon);
-                }
-            }
+        $couponValid = $coupon->isValidFor($form->getCart());
+        if (!$couponValid->isValid()) {
+            throw ValidationException::create($couponValid);
         }
 
-        return $this->owner->redirectBack();
-    }
-
-    /**
-     * @param array $data
-     * @param CheckoutFormInterface $form
-     * @return HTTPResponse
-     */
-    public function RemoveAppliedCoupons(array $data, CheckoutFormInterface $form): HTTPResponse
-    {
         $order = $this->getMutableCart($form);
         $order->clearAppliedOrderCoupons();
         $order->clearAppliedOrderItemCoupons();
+
+        if ($coupon instanceof OrderCoupon) {
+            $order->applyCoupon($coupon);
+        } else {
+            /** @var OrderItem|OrderItemExtension $orderItem */
+            foreach ($coupon->getApplicableOrderItems($order) as $orderItem) {
+                $orderItem->applyCoupon($coupon);
+            }
+        }
 
         return $this->owner->redirectBack();
     }
@@ -89,5 +82,19 @@ class CheckoutFormRequestHandlerExtension extends Extension
         }
 
         return $clone;
+    }
+
+    /**
+     * @param array $data
+     * @param CheckoutFormInterface $form
+     * @return HTTPResponse
+     */
+    public function RemoveAppliedCoupons(array $data, CheckoutFormInterface $form): HTTPResponse
+    {
+        $order = $this->getMutableCart($form);
+        $order->clearAppliedOrderCoupons();
+        $order->clearAppliedOrderItemCoupons();
+
+        return $this->owner->redirectBack();
     }
 }

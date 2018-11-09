@@ -45,7 +45,9 @@ class CheckoutFormExtension extends Extension
             );
         }
 
-        $actions->unshift(FormAction::create('ApplyCoupon',
-            _t(self::class . '.APPLY_COUPON', 'Apply Coupon')));
+        $actions->unshift(
+            FormAction::create('ApplyCoupon', _t(self::class . '.APPLY_COUPON', 'Apply Coupon'))
+                ->setValidationExempt()
+        );
     }
 }

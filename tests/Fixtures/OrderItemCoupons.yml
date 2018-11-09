@@ -41,6 +41,28 @@ SwipeStripe\Coupons\Order\OrderItem\OrderItemCoupon:
     MinSubTotalAmount: 1500
     MinSubTotalCurrency: NZD
 
+  limited-uses:
+    Title: Limited uses
+    Code: limited-uses-item
+    Percentage: 0.01
+    LimitUses: true
+    RemainingUses: 10
+
+  no-remaining-uses-no-limit-uses:
+    Title: No remaining but not limited
+    Code: no-remaining-uses-no-limit-uses-item
+    Percentage: 0.01
+    LimitUses: false
+    RemainingUses: 0
+
+  no-remaining-uses:
+    Title: No remaining uses
+    Code: no-remaining-uses-item
+    Percentage: 0.01
+    LimitUses: true
+    RemainingUses: 0
+
+
 SwipeStripe\Coupons\Order\OrderItem\OrderItemCouponPurchasable:
   one:
     OrderItemCoupon: =>SwipeStripe\Coupons\Order\OrderItem\OrderItemCoupon.twenty-dollars
@@ -68,4 +90,20 @@ SwipeStripe\Coupons\Order\OrderItem\OrderItemCouponPurchasable:
 
   seven:
     OrderItemCoupon: =>SwipeStripe\Coupons\Order\OrderItem\OrderItemCoupon.two-dollars-min-15
+    Purchasable: =>SwipeStripe\Coupons\Tests\TestProduct.product
+
+  eight:
+    OrderItemCoupon: =>SwipeStripe\Coupons\Order\OrderItem\OrderItemCoupon.limited-uses
+    Purchasable: =>SwipeStripe\Coupons\Tests\TestProduct.product
+
+  nine:
+    OrderItemCoupon: =>SwipeStripe\Coupons\Order\OrderItem\OrderItemCoupon.limited-uses
+    Purchasable: =>SwipeStripe\Coupons\Tests\TestProduct.other-product
+
+  ten:
+    OrderItemCoupon: =>SwipeStripe\Coupons\Order\OrderItem\OrderItemCoupon.no-remaining-uses-no-limit-uses
+    Purchasable: =>SwipeStripe\Coupons\Tests\TestProduct.product
+
+  eleven:
+    OrderItemCoupon: =>SwipeStripe\Coupons\Order\OrderItem\OrderItemCoupon.no-remaining-uses
     Purchasable: =>SwipeStripe\Coupons\Tests\TestProduct.product
