@@ -44,6 +44,7 @@ use UncleCheese\DisplayLogic\Extensions\DisplayLogic;
  * @property int $RemainingUses
  * @method HasManyList|OrderItemCouponAddOn[] OrderItemCouponAddOns()
  * @method HasManyList|OrderItemCouponPurchasable[] Purchasables()
+ * @method ManyManyThroughList|OrderItemCoupon[] OrderItemCouponStacks()
  * @method ManyManyThroughList|OrderCoupon[] OrderCouponStacks()
  * @mixin Versioned
  */
@@ -79,6 +80,17 @@ class OrderItemCoupon extends DataObject implements CouponInterface
     private static $has_many = [
         'Purchasables'          => OrderItemCouponPurchasable::class,
         'OrderItemCouponAddOns' => OrderItemCouponAddOn::class,
+    ];
+
+    /**
+     * @var array
+     */
+    private static $many_many = [
+        'OrderItemCouponStacks' => [
+            'through' => OrderItemCouponStackThrough::class,
+            'from'    => OrderItemCouponStackThrough::LEFT,
+            'to'      => OrderItemCouponStackThrough::RIGHT,
+        ],
     ];
 
     /**
@@ -371,7 +383,10 @@ class OrderItemCoupon extends DataObject implements CouponInterface
      */
     public function stacksWith(CouponInterface $other): bool
     {
-        if ($other instanceof OrderCoupon) {
+        if ($other instanceof self) {
+            $stacks = $this->OrderItemCouponStacks()->find(OrderItemCouponStackThrough::RIGHT . 'ID',
+                    $other->ID) !== null;
+        } elseif ($other instanceof OrderCoupon) {
             $stacks = $this->OrderCouponStacks()->find(OrderCouponItemCouponStackThrough::ORDER_COUPON . 'ID',
                     $other->ID) !== null;
         } else {
