@@ -14,12 +14,14 @@ use SilverStripe\ORM\DataObject;
 use SilverStripe\ORM\DataQuery;
 use SilverStripe\ORM\FieldType\DBDatetime;
 use SilverStripe\ORM\HasManyList;
+use SilverStripe\ORM\ManyManyThroughList;
 use SilverStripe\ORM\SS_List;
 use SilverStripe\ORM\ValidationResult;
 use SilverStripe\Versioned\Versioned;
 use SwipeStripe\Coupons\CouponBehaviour;
 use SwipeStripe\Coupons\CouponInterface;
 use SwipeStripe\Coupons\Order\OrderCoupon;
+use SwipeStripe\Coupons\Order\OrderCouponItemCouponStackThrough;
 use SwipeStripe\Order\Order;
 use SwipeStripe\Order\OrderItem\OrderItem;
 use SwipeStripe\Order\PurchasableInterface;
@@ -42,6 +44,7 @@ use UncleCheese\DisplayLogic\Extensions\DisplayLogic;
  * @property int $RemainingUses
  * @method HasManyList|OrderItemCouponAddOn[] OrderItemCouponAddOns()
  * @method HasManyList|OrderItemCouponPurchasable[] Purchasables()
+ * @method ManyManyThroughList|OrderCoupon[] OrderCouponStacks()
  * @mixin Versioned
  */
 class OrderItemCoupon extends DataObject implements CouponInterface
@@ -76,6 +79,13 @@ class OrderItemCoupon extends DataObject implements CouponInterface
     private static $has_many = [
         'Purchasables'          => OrderItemCouponPurchasable::class,
         'OrderItemCouponAddOns' => OrderItemCouponAddOn::class,
+    ];
+
+    /**
+     * @var array
+     */
+    private static $belongs_many_many = [
+        'OrderCouponStacks' => OrderCoupon::class . '.OrderItemCouponStacks',
     ];
 
     /**
@@ -361,7 +371,12 @@ class OrderItemCoupon extends DataObject implements CouponInterface
      */
     public function stacksWith(CouponInterface $other): bool
     {
-        $stacks = false;
+        if ($other instanceof OrderCoupon) {
+            $stacks = $this->OrderCouponStacks()->find(OrderCouponItemCouponStackThrough::ORDER_COUPON . 'ID',
+                    $other->ID) !== null;
+        } else {
+            $stacks = false;
+        }
 
         $this->extend('stacksWith', $other, $stacks);
         return $stacks;

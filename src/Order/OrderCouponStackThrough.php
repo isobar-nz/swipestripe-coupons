@@ -5,6 +5,7 @@ namespace SwipeStripe\Coupons\Order;
 
 use SilverStripe\ORM\DataObject;
 use SilverStripe\Versioned\Versioned;
+use SwipeStripe\Coupons\CouponCMSPermissions;
 use SwipeStripe\Coupons\SelfStackThroughObject;
 
 /**
@@ -18,6 +19,7 @@ use SwipeStripe\Coupons\SelfStackThroughObject;
  */
 class OrderCouponStackThrough extends DataObject
 {
+    use CouponCMSPermissions;
     use SelfStackThroughObject;
 
     const LEFT = 'OrderCoupon1';
