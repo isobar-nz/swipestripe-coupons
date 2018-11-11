@@ -355,4 +355,15 @@ class OrderItemCoupon extends DataObject implements CouponInterface
         // Coupon amount should always be negative, so it lowers order total
         return DBPrice::create_field(DBPrice::INJECTOR_SPEC, $couponAmount->absolute()->negative());
     }
+
+    /**
+     * @inheritdoc
+     */
+    public function stacksWith(CouponInterface $other): bool
+    {
+        $stacks = false;
+
+        $this->extend('stacksWith', $other, $stacks);
+        return $stacks;
+    }
 }

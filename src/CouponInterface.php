@@ -26,4 +26,10 @@ interface  CouponInterface
      * @return ValidationResult
      */
     public function isValidFor(Order $order, string $fieldName = 'Coupon'): ValidationResult;
+
+    /**
+     * @param CouponInterface $other
+     * @return bool
+     */
+    public function stacksWith(CouponInterface $other): bool;
 }
