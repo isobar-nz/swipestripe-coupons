@@ -13,6 +13,7 @@ use SilverStripe\ORM\ManyManyThroughList;
 use SilverStripe\ORM\ValidationResult;
 use SilverStripe\Versioned\Versioned;
 use SwipeStripe\Coupons\CouponBehaviour;
+use SwipeStripe\Coupons\CouponInterface;
 use SwipeStripe\Coupons\Order\OrderItem\OrderItemCoupon;
 use SwipeStripe\Order\Order;
 use SwipeStripe\Price\DBPrice;
@@ -34,7 +35,7 @@ use UncleCheese\DisplayLogic\Extensions\DisplayLogic;
  * @method ManyManyThroughList|static[] OrderCouponStacks()
  * @mixin Versioned
  */
-class OrderCoupon extends DataObject
+class OrderCoupon extends DataObject implements CouponInterface
 {
     use CouponBehaviour;
 

@@ -18,6 +18,7 @@ use SilverStripe\ORM\SS_List;
 use SilverStripe\ORM\ValidationResult;
 use SilverStripe\Versioned\Versioned;
 use SwipeStripe\Coupons\CouponBehaviour;
+use SwipeStripe\Coupons\CouponInterface;
 use SwipeStripe\Coupons\Order\OrderCoupon;
 use SwipeStripe\Order\Order;
 use SwipeStripe\Order\OrderItem\OrderItem;
@@ -43,7 +44,7 @@ use UncleCheese\DisplayLogic\Extensions\DisplayLogic;
  * @method HasManyList|OrderItemCouponPurchasable[] Purchasables()
  * @mixin Versioned
  */
-class OrderItemCoupon extends DataObject
+class OrderItemCoupon extends DataObject implements CouponInterface
 {
     use CouponBehaviour;
 
