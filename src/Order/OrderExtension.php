@@ -6,6 +6,7 @@ namespace SwipeStripe\Coupons\Order;
 use SilverStripe\ORM\DataExtension;
 use SilverStripe\ORM\DataList;
 use SilverStripe\ORM\DB;
+use SwipeStripe\Coupons\CouponInterface;
 use SwipeStripe\Coupons\Order\OrderItem\OrderItemCoupon;
 use SwipeStripe\Coupons\Order\OrderItem\OrderItemCouponAddOn;
 use SwipeStripe\Order\Order;
@@ -43,6 +44,14 @@ class OrderExtension extends DataExtension
     }
 
     /**
+     * @return DataList|OrderItemCoupon[]
+     */
+    public function OrderItemCoupons(): DataList
+    {
+        return OrderItemCoupon::get()->filter('OrderItemCouponAddOns.OrderItem.OrderID', $this->owner->ID);
+    }
+
+    /**
      * @param OrderCoupon $coupon
      */
     public function applyCoupon(OrderCoupon $coupon): void
@@ -53,6 +62,35 @@ class OrderExtension extends DataExtension
             $addOn->setCoupon($coupon);
             $addOn->write();
         }
+    }
+
+    /**
+     * @param CouponInterface $coupon
+     * @return int Number of coupons cleared.
+     */
+    public function clearNonStackableCoupons(CouponInterface $coupon): int
+    {
+        if (!$this->owner->IsMutable()) {
+            throw new OrderLockedException($this->owner);
+        }
+
+        $count = 0;
+
+        foreach ($this->OrderCouponAddOns() as $addOn) {
+            if (!$addOn->Coupon()->stacksWith($coupon)) {
+                $addOn->delete();
+                $count++;
+            }
+        }
+
+        foreach ($this->OrderItemCouponAddOns() as $addOn) {
+            if (!$addOn->Coupon()->stacksWith($coupon)) {
+                $addOn->delete();
+                $count++;
+            }
+        }
+
+        return $count;
     }
 
     /**

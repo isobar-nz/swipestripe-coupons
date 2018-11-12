@@ -31,6 +31,7 @@ class OrderItemCouponTest extends SapphireTest
         Fixtures::PRODUCTS,
         Fixtures::ITEM_COUPONS,
         Fixtures::ORDER_COUPONS,
+        Fixtures::STACKABLE_COUPONS,
     ];
 
     /**
@@ -519,6 +520,57 @@ class OrderItemCouponTest extends SapphireTest
 
         $orderItem->setQuantity(2);
         $this->assertTrue($coupon->isActiveForItem($orderItem));
+    }
+
+    /**
+     *
+     */
+    public function testStacksWithOrderCoupon()
+    {
+        /** @var OrderCoupon $orderCoupon */
+        $orderCoupon = $this->objFromFixture(OrderCoupon::class, 'stacks-with-item');
+        /** @var OrderItemCoupon $itemCoupon */
+        $itemCoupon = $this->objFromFixture(OrderItemCoupon::class, 'stacks-with-order');
+
+        $this->assertTrue($itemCoupon->stacksWith($orderCoupon));
+    }
+
+    /**
+     *
+     */
+    public function testStacksWithOrderItemCoupon()
+    {
+        /** @var OrderItemCoupon $coupon1 */
+        $coupon1 = $this->objFromFixture(OrderItemCoupon::class, 'stack1');
+        /** @var OrderItemCoupon $coupon2 */
+        $coupon2 = $this->objFromFixture(OrderItemCoupon::class, 'stacks-with-order');
+
+        $this->assertFalse($coupon1->stacksWith($coupon2));
+        $this->assertFalse($coupon2->stacksWith($coupon1));
+
+        $coupon2 = $this->objFromFixture(OrderItemCoupon::class, 'stack2');
+
+        $this->assertTrue($coupon1->stacksWith($coupon2));
+        $this->assertTrue($coupon2->stacksWith($coupon1));
+    }
+
+    /**
+     *
+     */
+    public function testOrderItemCouponStackInverseDeletion()
+    {
+        /** @var OrderItemCoupon $coupon1 */
+        $coupon1 = $this->objFromFixture(OrderItemCoupon::class, 'stack-delete-1');
+        /** @var OrderItemCoupon $coupon2 */
+        $coupon2 = $this->objFromFixture(OrderItemCoupon::class, 'stack-delete-2');
+
+        $this->assertTrue($coupon1->stacksWith($coupon2));
+        $this->assertTrue($coupon2->stacksWith($coupon1));
+
+        $coupon1->OrderItemCouponStacks()->remove($coupon2);
+
+        $this->assertFalse($coupon1->stacksWith($coupon2));
+        $this->assertFalse($coupon2->stacksWith($coupon1));
     }
 
     /**

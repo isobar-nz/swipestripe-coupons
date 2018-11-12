@@ -47,8 +47,7 @@ class CheckoutFormRequestHandlerExtension extends Extension
         }
 
         $order = $this->getMutableCart($form);
-        $order->clearAppliedOrderCoupons();
-        $order->clearAppliedOrderItemCoupons();
+        $removedCount = $order->clearNonStackableCoupons($coupon);
 
         if ($coupon instanceof OrderCoupon) {
             $order->applyCoupon($coupon);
@@ -57,6 +56,13 @@ class CheckoutFormRequestHandlerExtension extends Extension
             foreach ($coupon->getApplicableOrderItems($order) as $orderItem) {
                 $orderItem->applyCoupon($coupon);
             }
+        }
+
+        if ($removedCount > 0) {
+            $form->setMessage(_t(self::class . '.NONSTACKABLE_REMOVED', 'Your coupon has been added, but ' .
+                '{count} coupon(s) that are not stackable with the applied coupon have been removed.', [
+                'count' => $removedCount,
+            ]), ValidationResult::TYPE_INFO);
         }
 
         return $this->owner->redirectBack();

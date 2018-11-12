@@ -43,10 +43,11 @@ trait CouponBehaviour
 
 
     /**
+     * @see CouponInterface::getByCode()
      * @param string $code
      * @return null|static
      */
-    public static function getByCode(string $code): ?self
+    public static function getByCode(string $code): ?CouponInterface
     {
         return static::get_one(static::class, [
             'Code' => $code,

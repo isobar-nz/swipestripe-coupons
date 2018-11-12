@@ -9,9 +9,11 @@ use SilverStripe\Forms\NumericField;
 use SilverStripe\Forms\Tab;
 use SilverStripe\ORM\DataObject;
 use SilverStripe\ORM\FieldType\DBDatetime;
+use SilverStripe\ORM\ManyManyThroughList;
 use SilverStripe\ORM\ValidationResult;
 use SilverStripe\Versioned\Versioned;
 use SwipeStripe\Coupons\CouponBehaviour;
+use SwipeStripe\Coupons\CouponInterface;
 use SwipeStripe\Coupons\Order\OrderItem\OrderItemCoupon;
 use SwipeStripe\Order\Order;
 use SwipeStripe\Price\DBPrice;
@@ -30,9 +32,11 @@ use UncleCheese\DisplayLogic\Extensions\DisplayLogic;
  * @property string $ValidUntil
  * @property bool $LimitUses
  * @property int $RemainingUses
+ * @method ManyManyThroughList|OrderCoupon[] OrderCouponStacks()
+ * @method ManyManyThroughList|OrderItemCoupon[] OrderItemCouponStacks()
  * @mixin Versioned
  */
-class OrderCoupon extends DataObject
+class OrderCoupon extends DataObject implements CouponInterface
 {
     use CouponBehaviour;
 
@@ -55,6 +59,22 @@ class OrderCoupon extends DataObject
         'ValidUntil'    => 'Datetime',
         'LimitUses'     => 'Boolean',
         'RemainingUses' => 'Int',
+    ];
+
+    /**
+     * @var array
+     */
+    private static $many_many = [
+        'OrderCouponStacks'     => [
+            'through' => OrderCouponStackThrough::class,
+            'from'    => OrderCouponStackThrough::LEFT,
+            'to'      => OrderCouponStackThrough::RIGHT,
+        ],
+        'OrderItemCouponStacks' => [
+            'through' => OrderCouponItemCouponStackThrough::class,
+            'from'    => OrderCouponItemCouponStackThrough::ORDER_COUPON,
+            'to'      => OrderCouponItemCouponStackThrough::ORDER_ITEM_COUPON,
+        ],
     ];
 
     /**
@@ -264,5 +284,23 @@ class OrderCoupon extends DataObject
 
         // Coupon amount should always be negative, so it lowers order total
         return DBPrice::create_field(DBPrice::INJECTOR_SPEC, $couponAmount->absolute()->negative());
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function stacksWith(CouponInterface $other): bool
+    {
+        $stacks = false;
+
+        if ($other instanceof self) {
+            $stacks = $this->OrderCouponStacks()->find(OrderCouponStackThrough::RIGHT . 'ID', $other->ID) !== null;
+        } elseif ($other instanceof OrderItemCoupon) {
+            $stacks = $this->OrderItemCouponStacks()->find(OrderCouponItemCouponStackThrough::ORDER_ITEM_COUPON . 'ID',
+                    $other->ID) !== null;
+        }
+
+        $this->extend('stacksWith', $other, $stacks);
+        return $stacks;
     }
 }

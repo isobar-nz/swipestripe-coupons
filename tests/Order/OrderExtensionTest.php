@@ -43,6 +43,7 @@ class OrderExtensionTest extends SapphireTest
         Fixtures::PRODUCTS,
         Fixtures::ITEM_COUPONS,
         Fixtures::ORDER_COUPONS,
+        Fixtures::STACKABLE_COUPONS,
     ];
 
     /**
@@ -234,6 +235,45 @@ class OrderExtensionTest extends SapphireTest
         $order->paymentCaptured($payment);
         $coupon = OrderItemCoupon::get()->byID($coupon->ID);
         $this->assertSame(9, $coupon->RemainingUses);
+    }
+
+    /**
+     *
+     */
+    public function testClearNonStackableCoupons()
+    {
+        /** @var Order|OrderExtension $order */
+        $order = Order::singleton()->createCart();
+        /** @var TestProduct $product */
+        $product = $this->objFromFixture(TestProduct::class, 'product');
+        $order->addItem($product);
+
+        /** @var OrderItemCoupon $stackableItemCoupon */
+        $stackableItemCoupon = $this->objFromFixture(OrderItemCoupon::class, 'stacks-with-order');
+        /** @var OrderItemCoupon $twentyDollarsItem */
+        $twentyDollarsItem = $this->objFromFixture(OrderItemCoupon::class, 'twenty-dollars');
+        /** @var OrderCoupon $stackableOrderCoupon */
+        $stackableOrderCoupon = $this->objFromFixture(OrderCoupon::class, 'stacks-with-item');
+        /** @var OrderCoupon $twentyDollarsOrder */
+        $twentyDollarsOrder = $this->objFromFixture(OrderCoupon::class, 'twenty-dollars');
+
+        $order->applyCoupon($twentyDollarsOrder);
+        /** @var OrderItem|OrderItemExtension $orderItem */
+        $orderItem = $order->getOrderItem($product);
+        $orderItem->applyCoupon($twentyDollarsItem);
+
+        $this->assertTrue($order->hasCoupons());
+        $order->clearNonStackableCoupons($stackableOrderCoupon);
+        $this->assertFalse($order->hasCoupons());
+
+        $order->applyCoupon($stackableOrderCoupon);
+        $this->assertTrue($order->hasCoupons());
+
+        $order->clearNonStackableCoupons($stackableItemCoupon);
+        $orderItem->applyCoupon($stackableItemCoupon);
+
+        $this->assertCount(1, $order->OrderCouponAddOns());
+        $this->assertCount(1, $order->OrderItemCouponAddOns());
     }
 
     /**

@@ -5,6 +5,7 @@ en:
     REMOVE_APPLIED_COUPONS: 'Remove Applied Coupon(s)'
   SwipeStripe\Coupons\Checkout\CheckoutFormRequestHandlerExtension:
     COUPON_INVALID: 'Sorry, that coupon code is invalid.'
+    NONSTACKABLE_REMOVED: 'Your coupon has been added, but {count} coupon(s) that are not stackable with the applied coupon have been removed.'
   SwipeStripe\Coupons\CouponAdmin:
     MENUTITLE: Coupons
   SwipeStripe\Coupons\Order\OrderCoupon:
@@ -32,6 +33,12 @@ en:
       one: 'An Order Coupon Add On'
       other: '{count} Order Coupon Add Ons'
     SINGULARNAME: 'Order Coupon Add On'
+  SwipeStripe\Coupons\Order\OrderCouponStackThrough:
+    PLURALNAME: 'Order Coupon Stack Throughs'
+    PLURALS:
+      one: 'An Order Coupon Stack Through'
+      other: '{count} Order Coupon Stack Throughs'
+    SINGULARNAME: 'Order Coupon Stack Through'
   SwipeStripe\Coupons\Order\OrderItem\OrderItemCoupon:
     AMOUNT_NEGATIVE: 'Amount should not be negative.'
     AMOUNT_PERCENTAGE_BOTH_SET: 'Please set only one of amount and percentage. The other should be zero.'
