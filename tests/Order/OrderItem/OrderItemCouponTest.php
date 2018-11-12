@@ -555,6 +555,25 @@ class OrderItemCouponTest extends SapphireTest
     }
 
     /**
+     *
+     */
+    public function testOrderItemCouponStackInverseDeletion()
+    {
+        /** @var OrderItemCoupon $coupon1 */
+        $coupon1 = $this->objFromFixture(OrderItemCoupon::class, 'stack-delete-1');
+        /** @var OrderItemCoupon $coupon2 */
+        $coupon2 = $this->objFromFixture(OrderItemCoupon::class, 'stack-delete-2');
+
+        $this->assertTrue($coupon1->stacksWith($coupon2));
+        $this->assertTrue($coupon2->stacksWith($coupon1));
+
+        $coupon1->OrderItemCouponStacks()->remove($coupon2);
+
+        $this->assertFalse($coupon1->stacksWith($coupon2));
+        $this->assertFalse($coupon2->stacksWith($coupon1));
+    }
+
+    /**
      * @inheritDoc
      */
     protected function setUp()

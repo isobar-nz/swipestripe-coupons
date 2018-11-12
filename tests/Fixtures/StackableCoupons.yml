@@ -15,6 +15,17 @@ SwipeStripe\Coupons\Order\OrderItem\OrderItemCoupon:
     Percentage: 0.01
     OrderItemCouponStacks: =>SwipeStripe\Coupons\Order\OrderItem\OrderItemCoupon.stack1
 
+  stack-delete-1:
+    Title: Stacks with item coupon
+    Code: item-stack-del1
+    Percentage: 0.01
+
+  stack-delete-2:
+    Title: Stacks with item coupon
+    Code: item-stack-del2
+    Percentage: 0.01
+    OrderItemCouponStacks: =>SwipeStripe\Coupons\Order\OrderItem\OrderItemCoupon.stack-delete-1
+
 
 SwipeStripe\Coupons\Order\OrderItem\OrderItemCouponPurchasable:
   stackable-one:
@@ -47,3 +58,14 @@ SwipeStripe\Coupons\Order\OrderCoupon:
     Code: order-with-item
     Percentage: 0.01
     OrderItemCouponStacks: =>SwipeStripe\Coupons\Order\OrderItem\OrderItemCoupon.stacks-with-order
+
+  stack-delete-1:
+    Title: Stacks with order coupon
+    Code: order-stack-del1
+    Percentage: 0.01
+
+  stack-delete-2:
+    Title: Stacks with order coupon
+    Code: order-stack-del2
+    Percentage: 0.01
+    OrderCouponStacks: =>SwipeStripe\Coupons\Order\OrderCoupon.stack-delete-1
