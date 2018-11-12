@@ -1,0 +1,49 @@
+SwipeStripe\Coupons\Order\OrderItem\OrderItemCoupon:
+  stacks-with-order:
+    Title: Stacks with item coupon
+    Code: item-with-order
+    Percentage: 0.01
+
+  stack1:
+    Title: Stackable 1
+    Code: item-stack1
+    Percentage: 0.01
+
+  stack2:
+    Title: Stackable 2
+    Code: item-stack2
+    Percentage: 0.01
+    OrderItemCouponStacks: =>SwipeStripe\Coupons\Order\OrderItem\OrderItemCoupon.stack1
+
+
+SwipeStripe\Coupons\Order\OrderItem\OrderItemCouponPurchasable:
+  stackable-one:
+    OrderItemCoupon: =>SwipeStripe\Coupons\Order\OrderItem\OrderItemCoupon.stacks-with-order
+    Purchasable: =>SwipeStripe\Coupons\Tests\TestProduct.product
+
+  stackable-two:
+    OrderItemCoupon: =>SwipeStripe\Coupons\Order\OrderItem\OrderItemCoupon.stack1
+    Purchasable: =>SwipeStripe\Coupons\Tests\TestProduct.product
+
+  stackable-three:
+    OrderItemCoupon: =>SwipeStripe\Coupons\Order\OrderItem\OrderItemCoupon.stack2
+    Purchasable: =>SwipeStripe\Coupons\Tests\TestProduct.product
+
+
+SwipeStripe\Coupons\Order\OrderCoupon:
+  stack1:
+    Title: Stackable 1
+    Code: order-stack1
+    Percentage: 0.01
+
+  stack2:
+    Title: Stackable 2
+    Code: order-stack2
+    Percentage: 0.01
+    OrderCouponStacks: =>SwipeStripe\Coupons\Order\OrderCoupon.stack1
+
+  stacks-with-item:
+    Title: Stacks with item coupon
+    Code: order-with-item
+    Percentage: 0.01
+    OrderItemCouponStacks: =>SwipeStripe\Coupons\Order\OrderItem\OrderItemCoupon.stacks-with-order

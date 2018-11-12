@@ -31,6 +31,7 @@ class OrderCouponTest extends SapphireTest
         Fixtures::PRODUCTS,
         Fixtures::ITEM_COUPONS,
         Fixtures::ORDER_COUPONS,
+        Fixtures::STACKABLE_COUPONS,
     ];
 
     /**
@@ -403,6 +404,39 @@ class OrderCouponTest extends SapphireTest
         $this->assertTrue($coupon->AmountFor($order)->getMoney()->equals(
             new Money(-1000, $this->getSupportedCurrencies()->getDefaultCurrency())
         ));
+    }
+
+    /**
+     *
+     */
+    public function testStacksWithOrderCoupon()
+    {
+        /** @var OrderCoupon $coupon1 */
+        $coupon1 = $this->objFromFixture(OrderCoupon::class, 'twenty-dollars');
+        /** @var OrderCoupon $coupon2 */
+        $coupon2 = $this->objFromFixture(OrderCoupon::class, 'twenty-percent');
+
+        $this->assertFalse($coupon1->stacksWith($coupon2));
+        $this->assertFalse($coupon2->stacksWith($coupon1));
+
+        $coupon1 = $this->objFromFixture(OrderCoupon::class, 'stack1');
+        $coupon2 = $this->objFromFixture(OrderCoupon::class, 'stack2');
+
+        $this->assertTrue($coupon1->stacksWith($coupon2));
+        $this->assertTrue($coupon2->stacksWith($coupon1));
+    }
+
+    /**
+     *
+     */
+    public function testStacksWithOrderItemCoupon()
+    {
+        /** @var OrderCoupon $orderCoupon */
+        $orderCoupon = $this->objFromFixture(OrderCoupon::class, 'stacks-with-item');
+        /** @var OrderItemCoupon $itemCoupon */
+        $itemCoupon = $this->objFromFixture(OrderItemCoupon::class, 'stacks-with-order');
+
+        $this->assertTrue($orderCoupon->stacksWith($itemCoupon));
     }
 
     /**

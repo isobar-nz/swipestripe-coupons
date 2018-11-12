@@ -383,14 +383,14 @@ class OrderItemCoupon extends DataObject implements CouponInterface
      */
     public function stacksWith(CouponInterface $other): bool
     {
+        $stacks = false;
+
         if ($other instanceof self) {
             $stacks = $this->OrderItemCouponStacks()->find(OrderItemCouponStackThrough::RIGHT . 'ID',
                     $other->ID) !== null;
         } elseif ($other instanceof OrderCoupon) {
             $stacks = $this->OrderCouponStacks()->find(OrderCouponItemCouponStackThrough::ORDER_COUPON . 'ID',
                     $other->ID) !== null;
-        } else {
-            $stacks = false;
         }
 
         $this->extend('stacksWith', $other, $stacks);

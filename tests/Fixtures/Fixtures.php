@@ -14,6 +14,7 @@ final class Fixtures
     const ITEM_COUPONS = self::FIXTURE_BASE_PATH . '/OrderItemCoupons.yml';
     const ORDER_COUPONS = self::FIXTURE_BASE_PATH . '/OrderCoupons.yml';
     const PRODUCTS = self::FIXTURE_BASE_PATH . '/TestProducts.yml';
+    const STACKABLE_COUPONS = self::FIXTURE_BASE_PATH . '/StackableCoupons.yml';
 
     /**
      * Fixtures constructor.
