@@ -70,6 +70,10 @@ class OrderExtension extends DataExtension
      */
     public function clearNonStackableCoupons(CouponInterface $coupon): int
     {
+        if (!$this->owner->IsMutable()) {
+            throw new OrderLockedException($this->owner);
+        }
+
         $count = 0;
 
         foreach ($this->OrderCouponAddOns() as $addOn) {
