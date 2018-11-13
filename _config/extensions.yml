@@ -4,23 +4,23 @@ Name: swipestripe-coupons-extensions
 
 SwipeStripe\Order\Checkout\CheckoutForm:
   extensions:
-  - SwipeStripe\Coupons\Checkout\CheckoutFormExtension
+    swipestripe-coupons: SwipeStripe\Coupons\Checkout\CheckoutFormExtension
 
 SwipeStripe\Order\Checkout\CheckoutFormValidator:
   extensions:
-  - SwipeStripe\Coupons\Checkout\CheckoutFormValidatorExtension
+    swipestripe-coupons: SwipeStripe\Coupons\Checkout\CheckoutFormValidatorExtension
 
 SwipeStripe\Order\Checkout\CheckoutFormRequestHandler:
   extensions:
-  - SwipeStripe\Coupons\Checkout\CheckoutFormRequestHandlerExtension
+    swipestripe-coupons: SwipeStripe\Coupons\Checkout\CheckoutFormRequestHandlerExtension
 
 SwipeStripe\Order\Order:
   extensions:
-  - SwipeStripe\Coupons\Order\OrderExtension
+    swipestripe-coupons: SwipeStripe\Coupons\Order\OrderExtension
 
 SwipeStripe\Order\OrderItem\OrderItem:
   extensions:
-  - SwipeStripe\Coupons\Order\OrderItem\OrderItemExtension
+    swipestripe-coupons: SwipeStripe\Coupons\Order\OrderItem\OrderItemExtension
 
 ---
 Only:
@@ -28,8 +28,8 @@ Only:
 ---
 SwipeStripe\Common\Product\SimpleProduct:
   extensions:
-  - SwipeStripe\Coupons\Order\OrderItem\CouponAware
+    coupon-aware: SwipeStripe\Coupons\Order\OrderItem\CouponAware
 
 SwipeStripe\Common\Product\ComplexProduct\ComplexProductVariation:
   extensions:
-  - SwipeStripe\Coupons\Order\OrderItem\CouponAware
+    coupon-aware: SwipeStripe\Coupons\Order\OrderItem\CouponAware
