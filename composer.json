@@ -20,11 +20,6 @@
             "type": "vcs",
             "url": "https://github.com/littlegiant/silverstripe-swipestripe.git",
             "no-api": true
-        },
-        {
-            "type": "vcs",
-            "url": "https://github.com/hchokshi/silverstripe-wkhtml.git",
-            "no-api": true
         }
     ],
     "autoload": {
