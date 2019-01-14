@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace SwipeStripe\Coupons\Order;
 
+use Money\Money;
 use SilverStripe\Forms\FieldGroup;
 use SilverStripe\Forms\FieldList;
 use SilverStripe\Forms\NumericField;
@@ -44,6 +45,11 @@ class OrderCoupon extends DataObject implements CouponInterface
      * @var string
      */
     private static $table_name = 'SwipeStripe_Coupons_OrderCoupon';
+
+    /**
+     * @var null
+     */
+    private static $money_rounding_mode = null;
 
     /**
      * @var array
@@ -266,7 +272,10 @@ class OrderCoupon extends DataObject implements CouponInterface
         if ($this->Amount->hasAmount()) {
             $couponAmount = $this->Amount->getMoney();
         } else {
-            $couponAmount = $orderSubTotal->multiply(floatval($this->Percentage));
+
+            $roundingMode = $this->getRoundingMode();
+
+            $couponAmount = $orderSubTotal->multiply(floatval($this->Percentage), $roundingMode);
             $maxValue = $this->MaxValue->getMoney();
 
             if (!$maxValue->isZero() && $couponAmount->greaterThan($maxValue)) {
@@ -284,6 +293,28 @@ class OrderCoupon extends DataObject implements CouponInterface
 
         // Coupon amount should always be negative, so it lowers order total
         return DBPrice::create_field(DBPrice::INJECTOR_SPEC, $couponAmount->absolute()->negative());
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getRoundingMode()
+    {
+        $roundingMode = Money::ROUND_HALF_UP;
+        $configRoundingMode = static::config()->get('money_rounding_mode');
+
+        if ($configRoundingMode) {
+            $class = Money::class;
+            $reference = "$class::$configRoundingMode";
+
+            if (defined($reference)) {
+                $roundingMode = constant($reference);
+            }
+        }
+
+        $this->extend('updateRoundingMode', $roundingMode);
+
+        return $roundingMode;
     }
 
     /**
