@@ -38,15 +38,31 @@ class TestProduct extends DataObject implements PurchasableInterface
     /**
      * @inheritdoc
      */
+    public function getTitle(): string
+    {
+        return $this->getField('Title');
+    }
+
+    /**
+     * @inheritdoc
+     */
     public function getDescription(): string
     {
-        return $this->Title;
+        return $this->getField('Description');
     }
 
     /**
      * @inheritdoc
      */
     public function getBasePrice(): DBPrice
+    {
+        return $this->getField('Price');
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function getPrice(): DBPrice
     {
         return $this->getField('Price');
     }
